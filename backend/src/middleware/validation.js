@@ -121,9 +121,59 @@ export const createStrategyValidation = [
   body('legs')
     .optional()
     .isInt({ min: 1, max: 10 }).withMessage('Legs must be between 1-10'),
+  body('lots')
+    .optional()
+    .isInt({ min: 1, max: 1000 }).withMessage('Lots must be between 1-1000'),
+  body('expiryDate')
+    .optional()
+    .isISO8601().withMessage('Invalid expiry date format'),
   body('type')
     .optional()
     .isIn(['Public', 'Private']).withMessage('Type must be Public or Private'),
+  validate
+];
+
+export const updateStrategyValidation = [
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 3, max: 100 }).withMessage('Name must be between 3-100 characters'),
+  body('segment')
+    .optional()
+    .isIn(['Crypto', 'Forex', 'Indian']).withMessage('Invalid segment'),
+  body('capital')
+    .optional()
+    .isFloat({ min: 0 }).withMessage('Capital must be a positive number'),
+  body('symbol')
+    .optional()
+    .isString().withMessage('Symbol must be a string'),
+  body('legs')
+    .optional()
+    .isInt({ min: 1, max: 10 }).withMessage('Legs must be between 1-10'),
+  body('lots')
+    .optional()
+    .isInt({ min: 1, max: 1000 }).withMessage('Lots must be between 1-1000'),
+  body('expiryDate')
+    .optional()
+    .isISO8601().withMessage('Invalid expiry date format'),
+  body('type')
+    .optional()
+    .isIn(['Public', 'Private']).withMessage('Type must be Public or Private'),
+  body('isActive')
+    .optional()
+    .toBoolean()
+    .isBoolean().withMessage('isActive must be boolean'),
+  body('isPublic')
+    .optional()
+    .toBoolean()
+    .isBoolean().withMessage('isPublic must be boolean'),
+  body('isPaused')
+    .optional()
+    .toBoolean()
+    .isBoolean().withMessage('isPaused must be boolean'),
+  body('description')
+    .optional()
+    .isString().withMessage('Description must be a string'),
   validate
 ];
 

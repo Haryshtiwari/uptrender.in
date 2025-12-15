@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Card, CardContent, Typography, Grid, Avatar } from '@mui/material';
+import { Box, Card, Typography, Grid, Avatar } from '@mui/material';
 import { Assignment, Warning, Schedule, CheckCircle } from '@mui/icons-material';
 import { useTheme } from '@mui/material/styles';
 
@@ -40,7 +40,7 @@ const TicketStatsCards = ({ stats }) => {
         const gradientBg = `linear-gradient(135deg, ${iconColor}33, ${iconColor}22)`;
 
         return (
-          <Grid size={{xs:12,md:3,lg:3,sm:3}}key={index}>
+          <Grid item xs={12} sm={6} md={3} lg={3} key={index}>
             <Card
               elevation={3}
               sx={{

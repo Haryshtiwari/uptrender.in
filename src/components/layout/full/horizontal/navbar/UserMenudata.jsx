@@ -58,12 +58,7 @@ const UserMenuItems = [
       icon: IconNotes,
       href: '/user/trade-info',
     },
-      {
-      id: uniqueId(),
-      title: 'UPI',
-      icon: IconPlus,
-      href: '/user/fund-add',
-    },
+    
       {
       id: uniqueId(),
       title: 'Plan & Bill',

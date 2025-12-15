@@ -93,18 +93,6 @@ const UserMenuItems = [
   },
   {
     id: uniqueId(),
-    title: 'Pricing',
-    icon: IconCurrencyDollar,
-    href: '/user/pricing',
-  },
-  {
-    id: uniqueId(),
-    title: 'UPI',
-    icon: IconPlus,
-    href: '/user/fund-add',
-  },
-  {
-    id: uniqueId(),
     title: 'Plan & Bill',
     icon: IconFileInvoice,
     href: '/user/plan-info',

@@ -31,6 +31,7 @@ import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
 import { Tooltip, Switch } from "@mui/material";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { PieChart, Pie, Cell } from "recharts";
 import { useWallet } from "../../../hooks/useWallet";
@@ -48,6 +49,7 @@ const UserPlanPage = () => {
   useTheme();
   const { balance, currency, loading: walletLoading, error: walletError, refresh } = useWallet();
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [planData, setPlanData] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
   
@@ -147,7 +149,7 @@ const UserPlanPage = () => {
 
   // Handler functions for buttons
   const handleUpgradePlan = () => {
-    setUpgradeDialogOpen(true);
+    navigate('/user/pricing');
   };
 
   const handleViewBilling = () => {

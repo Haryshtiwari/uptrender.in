@@ -23,6 +23,12 @@ import {
   useMediaQuery,
   useTheme,
   CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from "@mui/material";
 import {
   Visibility,
@@ -145,6 +151,7 @@ export default function MarketPlace() {
         if (res.success && mounted) {
           const strategies = res.data || [];
           console.log('Setting strategies:', strategies);
+          console.log('First strategy price:', strategies[0]?.price);
           setStrategies(strategies);
           if (strategies.length === 0) {
             setSnack({ open: true, message: 'No public strategies available yet. Create a public strategy to see it here!' });
@@ -334,6 +341,15 @@ export default function MarketPlace() {
 
   const handleSubscribe = async (strategyId) => {
     const key = String(strategyId);
+    const strategy = strategies.find(s => s.id === strategyId);
+    const price = strategy?.price || 0;
+    
+    // Show confirmation if price > 0
+    if (price > 0) {
+      const confirmed = window.confirm(`Subscribe to ${strategy?.name} for ₹${price}? This amount will be deducted from your wallet.`);
+      if (!confirmed) return;
+    }
+    
     setSubscriptionLoading(prev => ({ ...prev, [key]: true }));
     try {
       const result = await strategySubscriptionService.subscribeToStrategy(strategyId, 1);
@@ -344,12 +360,19 @@ export default function MarketPlace() {
           setSubscriptionMap(prev => ({ ...prev, [key]: subscriptionId }));
         }
         setSnack({ open: true, message: result.message || 'Subscribed to strategy successfully!' });
+        
+        // Reload page to refresh wallet balance
+        if (price > 0) {
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
+        }
       } else {
         setSnack({ open: true, message: result.error || 'Failed to subscribe to strategy' });
       }
     } catch (error) {
       console.error('Subscribe error:', error);
-      setSnack({ open: true, message: 'Failed to subscribe to strategy' });
+      setSnack({ open: true, message: error.response?.data?.error || 'Failed to subscribe to strategy' });
     } finally {
       setSubscriptionLoading(prev => ({ ...prev, [key]: false }));
     }
@@ -724,18 +747,7 @@ export default function MarketPlace() {
                   },
                 }}
               />
-                <Button
-                  variant="contained"
-                  startIcon={<AddOutlined />}
-                  sx={{
-                    textTransform: "none",
-                    borderRadius: 2,
-                    px: 1,
-                  }}
-                  onClick={handleCreate}
-                >
-                  New Strategy
-                </Button>
+                {/* New Strategy button removed; moved to Strategy Info > My Strategies */}
               </Box>
             </Box>
           
@@ -752,20 +764,7 @@ export default function MarketPlace() {
               gap: 2,
             }}
           >
-            <Button
-              variant="contained"
-              startIcon={<Settings />}
-              size="small"
-              fullWidth
-              sx={{
-                textTransform: "none",
-                borderRadius: 2,
-                whiteSpace: "nowrap",
-              }}
-              onClick={handleCreate}
-            >
-              New Strategy
-            </Button>
+            {/* New Strategy button removed from mobile action section */}
             <TextField
               fullWidth
               size="small"
@@ -867,23 +866,6 @@ export default function MarketPlace() {
                         />
                       )}
                     </IconButton>
-
-                    <Tooltip title={strategy.isActive ? "Active" : "Inactive"}>
-                      <Switch
-                        size="small"
-                        checked={strategy.isActive}
-                        onChange={() => toggleStrategyActive(strategy.id)}
-                        inputProps={{ "aria-label": "toggle active status" }}
-                        sx={{
-                          "& .MuiSwitch-switchBase.Mui-checked": {
-                            color: "secondary.main",
-                          },
-                          "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
-                            { backgroundColor: "secondary.main" },
-                          gap: 2,
-                        }}
-                      />
-                    </Tooltip>
                   </Box>
 
                   {/* Last Updated Row */}
@@ -988,6 +970,7 @@ export default function MarketPlace() {
                         ["Symbol", strategy.symbol],
                         ["Value", formatNumber(strategy.symbolValue)],
                         ["Legs", strategy.legs],
+                        ...(strategy.type === 'Public' && strategy.price ? [["Price", `₹${formatNumber(strategy.price)}`]] : [])
                       ].map(([label, value]) => (
                         <Grid item key={label}>
                           <Grid container justifyContent="space-between">
@@ -1043,29 +1026,6 @@ export default function MarketPlace() {
                       <Box
                         sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
                       >
-                        <Tooltip title={strategy.isRunning ? "Pause" : "Start"}>
-                          <IconButton
-                            size="small"
-                            onClick={() => toggleStrategyRunning(strategy.id)}
-                            sx={{
-                              "&:hover": {
-                                backgroundColor: strategy.isRunning
-                                  ? "warning.light"
-                                  : "success.light",
-                                color: strategy.isRunning
-                                  ? "warning.main"
-                                  : "success.main",
-                              },
-                            }}
-                          >
-                            {strategy.isRunning ? (
-                              <Pause sx={{ fontSize: 16 }} />
-                            ) : (
-                              <PlayArrow sx={{ fontSize: 16 }} />
-                            )}
-                          </IconButton>
-                        </Tooltip>
-
                         <Tooltip title={strategy.isPublic ? "Public" : "Private"}>
                           <Box
                             sx={{
@@ -1192,7 +1152,7 @@ export default function MarketPlace() {
                           {subscriptionLoading[String(strategy.id)] ? (
                             <CircularProgress size={16} sx={{ mr: 1 }} />
                           ) : null}
-                          Subscribe
+                          Subscribe{strategy.price && strategy.price > 0 ? ` @₹${strategy.price}` : ''}
                         </Button>
                       </Tooltip>
                     </Box>
@@ -1264,25 +1224,179 @@ export default function MarketPlace() {
 
 </Box>
       {/* Details Dialog */}
-      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} fullWidth maxWidth='sm'>
-        <DialogTitle>Strategy details</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {selectedStrategy ? (
-              <Box>
-                <Typography variant='h6'>{selectedStrategy.name}</Typography>
-                <Typography variant='body2' color='text.secondary'>{selectedStrategy.description}</Typography>
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant='body2'>Performance: {selectedStrategy.performance ?? 0}%</Typography>
-                  <Typography variant='body2'>Capital: ₹{Number(selectedStrategy.capital || 0).toLocaleString()}</Typography>
-                </Box>
-              </Box>
-            ) : 'Loading...'}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDetailsOpen(false)}>Close</Button>
+      <Dialog open={detailsOpen} onClose={() => setDetailsOpen(false)} fullWidth maxWidth='lg'>
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6">{selectedStrategy?.name || 'Strategy Details'}</Typography>
+            <IconButton size="small" onClick={() => setDetailsOpen(false)}>
+              <Close fontSize="small" />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers sx={{ bgcolor: 'background.default' }}>
           {selectedStrategy && (
+            <Box>
+              {/* Top Metrics Row */}
+              <Grid container spacing={2} mb={3}>
+                <Grid item xs={6} sm={3}>
+                  <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'background.paper' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: selectedStrategy.totalReturn >= 0 ? 'success.main' : 'error.main' }}>
+                      {selectedStrategy.totalReturn ? `${selectedStrategy.totalReturn >= 0 ? '+' : ''}${selectedStrategy.totalReturn.toFixed(2)}%` : '0%'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Total Return</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={6} sm={3}>
+                  <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'background.paper' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                      {selectedStrategy.sharpeRatio ? selectedStrategy.sharpeRatio.toFixed(2) : '0'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Sharpe Ratio</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={6} sm={3}>
+                  <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'background.paper' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: 'error.main' }}>
+                      {selectedStrategy.maxDrawdown ? `${selectedStrategy.maxDrawdown.toFixed(2)}%` : '0%'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Max Drawdown</Typography>
+                  </Paper>
+                </Grid>
+                <Grid item xs={6} sm={3}>
+                  <Paper sx={{ p: 2, textAlign: 'center', bgcolor: 'background.paper' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                      {selectedStrategy.winRate ? `${selectedStrategy.winRate.toFixed(1)}%` : '0%'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Win Rate</Typography>
+                  </Paper>
+                </Grid>
+              </Grid>
+
+              {/* Performance Metrics & Monthly Returns */}
+              <Grid container spacing={3} mb={3}>
+                {/* Performance Metrics */}
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 2.5, bgcolor: 'background.paper' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>
+                      Performance Metrics
+                    </Typography>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Annualized Return</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                          {selectedStrategy.annualizedReturn ? `${selectedStrategy.annualizedReturn.toFixed(2)}%` : '0%'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Total Trades</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                          {selectedStrategy.totalTrades || selectedStrategy.trades || 0}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Win/Loss</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {selectedStrategy.totalWins || 0} Wins / {selectedStrategy.totalLosses || 0} losses
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" color="text.secondary">Profit Factor</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                          {selectedStrategy.profitFactor ? selectedStrategy.profitFactor.toFixed(2) : '0'}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ gridColumn: '1 / -1' }}>
+                        <Typography variant="caption" color="text.secondary">Average Win/Loss</Typography>
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          <span style={{ color: '#16a34a' }}>+2.8%</span> / <span style={{ color: '#dc2626' }}>-1.5%</span>
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+                </Grid>
+
+                {/* Monthly Returns */}
+                <Grid item xs={12} md={6}>
+                  <Paper sx={{ p: 2.5, bgcolor: 'background.paper' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>
+                      Monthly Returns
+                    </Typography>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5 }}>
+                      {[
+                        { month: 'Jan 2024', return: '+3.2%', color: 'success.main' },
+                        { month: 'Feb 2024', return: '-1.5%', color: 'error.main' },
+                        { month: 'Mar 2024', return: '+4.8%', color: 'success.main' },
+                        { month: 'Apr 2024', return: '+2.1%', color: 'success.main' },
+                        { month: 'May 2024', return: '+5.3%', color: 'success.main' },
+                        { month: 'Jun 2024', return: '-2.2%', color: 'error.main' },
+                      ].map((item, idx) => (
+                        <Box key={idx}>
+                          <Typography variant="caption" color="text.secondary">{item.month}</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700, color: item.color }}>
+                            {item.return}
+                          </Typography>
+                        </Box>
+                      ))}
+                    </Box>
+                  </Paper>
+                </Grid>
+              </Grid>
+
+              {/* Recent Trades Table */}
+              <Paper sx={{ bgcolor: 'background.paper' }}>
+                <Box sx={{ p: 2.5 }}>
+                  <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>
+                    Recent Trades
+                  </Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow sx={{ bgcolor: 'action.hover' }}>
+                          <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Symbol</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Type</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Entry</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Exit</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>P&L</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>Return</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {(selectedStrategy.trades || []).slice(0, 10).map((trade, idx) => (
+                          <TableRow key={idx}>
+                            <TableCell>{trade.date || 'N/A'}</TableCell>
+                            <TableCell>{trade.symbol || 'NIFTY'}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={trade.type || trade.action || 'BUY'}
+                                size="small"
+                                color={(trade.type || trade.action || '').toUpperCase() === 'BUY' ? 'success' : 'error'}
+                                sx={{ fontWeight: 600 }}
+                              />
+                            </TableCell>
+                            <TableCell>₹{trade.entry ? Number(trade.entry).toLocaleString() : '0'}</TableCell>
+                            <TableCell>₹{trade.exit ? Number(trade.exit).toLocaleString() : '0'}</TableCell>
+                            <TableCell sx={{ color: trade.pnl >= 0 ? 'success.main' : 'error.main', fontWeight: 600 }}>
+                              ₹{trade.pnl ? Number(trade.pnl).toLocaleString() : '0'}
+                            </TableCell>
+                            <TableCell sx={{ color: trade.return >= 0 ? 'success.main' : 'error.main', fontWeight: 600 }}>
+                              {trade.return ? `${trade.return >= 0 ? '+' : ''}${trade.return.toFixed(2)}%` : '0%'}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              </Paper>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setDetailsOpen(false)} variant="outlined">
+            Close
+          </Button>
+          {selectedStrategy && !subscriptionMap[selectedStrategy.id] && (
             <Button 
               variant="contained" 
               color="primary" 
@@ -1291,7 +1405,7 @@ export default function MarketPlace() {
                 setDetailsOpen(false);
               }}
             >
-              Subscribe
+              Subscribe{selectedStrategy.price && selectedStrategy.price > 0 ? ` @₹${selectedStrategy.price}` : ''}
             </Button>
           )}
         </DialogActions>

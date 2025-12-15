@@ -68,7 +68,9 @@ export default function CreateStrategy() {
     symbol: '', 
     legs: 1, 
     description: '', 
-    type: 'Private' 
+    type: 'Private',
+    price: null,
+    isFree: false
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -104,7 +106,7 @@ export default function CreateStrategy() {
       const res = await strategyService.createStrategy(payload);
       if (res.success) {
         showToast('Strategy created successfully!', 'success');
-        navigate('/user/marketplace');
+        navigate('/user/strategy-info', { state: { tab: 1 } }); // Navigate to My Strategies tab
       } else {
         showToast(res.error || res.message || 'Failed to create strategy', 'error');
       }
@@ -159,13 +161,6 @@ export default function CreateStrategy() {
       <Paper elevation={2} sx={{ p: 3 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h5">Create Strategy</Typography>
-          <Button
-            variant="outlined"
-            startIcon={<Category />}
-            onClick={() => setTemplateOpen(true)}
-          >
-            Use Template
-          </Button>
         </Box>
 
         <Divider sx={{ mb: 3 }} />
@@ -311,6 +306,39 @@ export default function CreateStrategy() {
             </TextField>
           </Box>
 
+          {/* Pricing Fields - Only show when Public */}
+          {form.type === 'Public' && (
+            <>
+              <Box>
+                <Box display="flex" alignItems="center" gap={0.5} mb={0.5}>
+                  <Typography variant="body2" color="text.secondary">
+                    Price
+                  </Typography>
+                  <Tooltip title="Set the subscription price for this strategy">
+                    <IconButton size="small">
+                      <Info fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+                <TextField
+                  fullWidth
+                  type="number"
+                  placeholder="e.g., 499"
+                  value={form.price || ''}
+                  onChange={(e) => {
+                    setForm((f) => ({ 
+                      ...f, 
+                      price: e.target.value ? Number(e.target.value) : null,
+                      isFree: false
+                    }));
+                  }}
+                  inputProps={{ min: 0, step: 1 }}
+                  helperText="Leave empty or 0 for free strategy"
+                />
+              </Box>
+            </>
+          )}
+
           {/* Description Field with Tooltip */}
           <Box>
             <Box display="flex" alignItems="center" gap={0.5} mb={0.5}>
@@ -338,45 +366,22 @@ export default function CreateStrategy() {
           <Divider sx={{ my: 1 }} />
 
           {/* Action Buttons */}
-          <Box display="flex" justifyContent="space-between" gap={2}>
-            <ButtonGroup variant="outlined" size="large">
-              <Button
-                startIcon={<Save />}
-                onClick={() => setSaveDraftOpen(true)}
-              >
-                Save Draft
-              </Button>
-              <Button
-                startIcon={<Science />}
-                onClick={() => setTestDialogOpen(true)}
-              >
-                Test
-              </Button>
-              <Button
-                startIcon={<Timeline />}
-                onClick={() => setBacktestOpen(true)}
-              >
-                Backtest
-              </Button>
-            </ButtonGroup>
-
-            <Box display="flex" gap={2}>
-              <Button 
-                variant="outlined" 
-                size="large"
-                onClick={() => navigate(-1)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="contained"
-                size="large"
-                onClick={handleSubmit}
-                disabled={loading}
-              >
-                {loading ? 'Creating...' : 'Create Strategy'}
-              </Button>
-            </Box>
+          <Box display="flex" justifyContent="flex-end" gap={2}>
+            <Button 
+              variant="outlined" 
+              size="large"
+              onClick={() => navigate(-1)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleSubmit}
+              disabled={loading}
+            >
+              {loading ? 'Creating...' : 'Create Strategy'}
+            </Button>
           </Box>
         </Box>
       </Paper>

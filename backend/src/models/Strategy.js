@@ -55,7 +55,19 @@ const Strategy = sequelize.define('Strategy', {
     type: DataTypes.INTEGER,
     defaultValue: 1
   },
+  lots: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1
+  },
+  expiryDate: {
+    type: DataTypes.DATEONLY,
+    allowNull: true
+  },
   isRunning: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  isPaused: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
@@ -78,6 +90,11 @@ const Strategy = sequelize.define('Strategy', {
   description: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true,
+    defaultValue: null
   }
 }, {
   tableName: 'strategies',

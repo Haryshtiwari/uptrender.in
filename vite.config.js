@@ -18,7 +18,8 @@ export default defineConfig({
   server: {
     port: 4000,
     host: true, // Allow external connections
-    cors: true
+    cors: true,
+    allowedHosts: ['dev.uptrender.in', 'localhost']
   },
   preview: {
     port: 4000,

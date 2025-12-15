@@ -41,7 +41,12 @@ import {
   Person as PersonIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
+  Assignment as AssignmentIcon,
+  Warning as WarningIcon,
+  Schedule as ScheduleIcon,
+  CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
+import { useTheme } from '@mui/material/styles';
 import { formatDistanceToNow } from 'date-fns';
 import Breadcrumb from '../../../components/layout/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../../components/common/PageContainer';
@@ -54,6 +59,7 @@ const BCrumb = [
 ];
 
 const UserSupport = () => {
+  const theme = useTheme();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -327,76 +333,77 @@ const UserSupport = () => {
         </CardContent>
       </Card>
 
-      {/* Statistics Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6} sm={6} md={3}>
-          <Card sx={{ 
-            bgcolor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 2
-          }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Typography variant="subtitle2" color="primary" fontWeight={600} gutterBottom>
-                Total Tickets
-              </Typography>
-              <Typography variant="h3" fontWeight="bold">
-                {tickets.length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
-          <Card sx={{ 
-            bgcolor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 2
-          }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Typography variant="subtitle2" color="warning.main" fontWeight={600} gutterBottom>
-                Open Tickets
-              </Typography>
-              <Typography variant="h3" fontWeight="bold">
-                {tickets.filter(t => t.status === 'open').length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
-          <Card sx={{ 
-            bgcolor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 2
-          }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Typography variant="subtitle2" color="info.main" fontWeight={600} gutterBottom>
-                In Progress
-              </Typography>
-              <Typography variant="h3" fontWeight="bold">
-                {tickets.filter(t => t.status === 'in-progress').length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={6} sm={6} md={3}>
-          <Card sx={{ 
-            bgcolor: 'background.paper',
-            border: '1px solid',
-            borderColor: 'divider',
-            borderRadius: 2
-          }}>
-            <CardContent sx={{ p: 2.5 }}>
-              <Typography variant="subtitle2" color="success.main" fontWeight={600} gutterBottom>
-                Resolved
-              </Typography>
-              <Typography variant="h3" fontWeight="bold">
-                {tickets.filter(t => t.status === 'resolved').length}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* Statistics Cards - new design */}
+      <Grid container spacing={{ xs: 1.5, sm: 2 }} sx={{ mb: 3 }}>
+        {[
+          {
+            title: 'Total Tickets',
+            count: tickets.length,
+            icon: <AssignmentIcon fontSize="small" />,
+            color: 'primary',
+          },
+          {
+            title: 'Open Tickets',
+            count: tickets.filter(t => t.status === 'open').length,
+            icon: <WarningIcon fontSize="small" />,
+            color: 'error',
+          },
+          {
+            title: 'In Progress',
+            count: tickets.filter(t => t.status === 'in-progress').length,
+            icon: <ScheduleIcon fontSize="small" />,
+            color: 'warning',
+          },
+          {
+            title: 'Resolved',
+            count: tickets.filter(t => t.status === 'resolved').length,
+            icon: <CheckCircleIcon fontSize="small" />,
+            color: 'success',
+          },
+        ].map((card, idx) => {
+          const iconColor = theme.palette[card.color]?.main || theme.palette.primary.main;
+          const gradientBg = `linear-gradient(135deg, ${iconColor}33, ${iconColor}22)`;
+          return (
+            <Grid item xs={12} sm={6} md={6} lg={3} key={idx}>
+              <Card
+                elevation={3}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  p: { xs: 1.5, sm: 2 },
+                  borderRadius: 4,
+                  background: gradientBg,
+                  transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                  '&:hover': {
+                    transform: 'translateY(-5px)',
+                    boxShadow: `0 8px 20px ${iconColor}44`,
+                  },
+                }}
+              >
+                <Avatar
+                  sx={{
+                    bgcolor: iconColor,
+                    color: theme.palette.common.white,
+                    width: { xs: 40, sm: 48 },
+                    height: { xs: 40, sm: 48 },
+                    mr: { xs: 1.5, sm: 2 },
+                    boxShadow: `0 2px 6px ${iconColor}88`,
+                  }}
+                >
+                  {card.icon}
+                </Avatar>
+                <Box>
+                  <Typography variant="body2" color="text.secondary" fontWeight={600}>
+                    {card.title}
+                  </Typography>
+                  <Typography color="text.primary" fontWeight={700} sx={{ fontSize: { xs: 20, sm: 24 } }}>
+                    {card.count}
+                  </Typography>
+                </Box>
+              </Card>
+            </Grid>
+          );
+        })}
       </Grid>
 
       {/* Tickets Table */}

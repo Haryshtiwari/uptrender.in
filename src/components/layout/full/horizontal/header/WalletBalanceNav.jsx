@@ -1,9 +1,9 @@
 import React from 'react';
 import { Box, Typography, Avatar, CircularProgress, Tooltip } from '@mui/material';
+import { IconWallet } from '@tabler/icons-react';
 import { useWallet } from '../../../../../hooks/useWallet';
-import icon1Img from '../../../../../assets/images/svgs/icon-master-card-2.svg';
 
-const WalletBalanceNav = ({ onClick }) => {
+const WalletBalanceNav = ({ onClick, compact = false }) => {
   const { balance, currency, loading } = useWallet();
 
   return (
@@ -24,10 +24,10 @@ const WalletBalanceNav = ({ onClick }) => {
         }}
       >
         <Avatar variant="rounded" sx={{ bgcolor: (theme) => theme.palette.primary.light, width: 36, height: 36 }}>
-          <Avatar src={icon1Img} alt="card" sx={{ width: 22, height: 22 }} />
+          <IconWallet size={22} stroke={1.5} color="white" />
         </Avatar>
 
-        {loading ? (
+        {!compact && (loading ? (
           <CircularProgress size={18} />
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', lineHeight: 1 }}>
@@ -38,7 +38,7 @@ const WalletBalanceNav = ({ onClick }) => {
               Wallet
             </Typography>
           </Box>
-        )}
+        ))}
       </Box>
     </Tooltip>
   );

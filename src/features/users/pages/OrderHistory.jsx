@@ -49,6 +49,7 @@ import Breadcrumb from '../../../components/layout/full/shared/breadcrumb/Breadc
 import tradeService from '../../../services/tradeService';
 import { useToast } from '../../../hooks/useToast';
 import ViewTradeDetailsDialog from '../../trade/components/ViewTradeDetailsDialog';
+import DateRangePicker from '../../../components/shared/DateRangePicker';
 
 const OrderHistory = () => {
   const theme = useTheme();
@@ -64,6 +65,7 @@ const OrderHistory = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [tabValue, setTabValue] = useState(0);
   const [viewTrade, setViewTrade] = useState(null);
+  const [dateRange, setDateRange] = useState(null);
 
   const marketOptions = ['Forex', 'Crypto', 'Indian'];
   const brokerOptions = {
@@ -120,7 +122,17 @@ const OrderHistory = () => {
       order.broker.toLowerCase().includes(searchTerm.toLowerCase());
     const matchMarket = selectedMarkets.length === 0 || selectedMarkets.includes(order.market);
     const matchBroker = selectedBrokers.length === 0 || selectedBrokers.includes(order.broker);
-    return matchSearch && matchMarket && matchBroker;
+    let matchDate = true;
+    if (dateRange?.startDate && dateRange?.endDate) {
+      const od = new Date(order.date);
+      const start = new Date(dateRange.startDate);
+      const end = new Date(dateRange.endDate);
+      // normalize to full-day range
+      start.setHours(0, 0, 0, 0);
+      end.setHours(23, 59, 59, 999);
+      matchDate = od >= start && od <= end;
+    }
+    return matchSearch && matchMarket && matchBroker && matchDate;
   });
 
   const paginatedOrders = filteredOrders.slice(
@@ -227,6 +239,9 @@ const OrderHistory = () => {
         })}
       </Grid>
 
+      {/* Date Range Filter */}
+      <DateRangePicker onDateRangeChange={setDateRange} />
+
       <Box mb={3} display="flex" justifyContent="space-between" alignItems="center" flexWrap="wrap" gap={2}>
         <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
           <TextField variant="outlined" size="small" placeholder="Search orders..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} InputProps={{ startAdornment: <Search fontSize="small" /> }} />
@@ -238,8 +253,18 @@ const OrderHistory = () => {
             <Button onClick={(e) => setAnchorElBroker(e.currentTarget)} variant="outlined" startIcon={<FilterList />} color={selectedBrokers.length > 0 ? 'primary' : 'inherit'}>Broker ({selectedBrokers.length})</Button>
             <Menu anchorEl={anchorElBroker} open={Boolean(anchorElBroker)} onClose={() => setAnchorElBroker(null)}>{[...brokerOptions.forex, ...brokerOptions.crypto, ...brokerOptions.indian].map((broker) => (<MenuItem key={broker} onClick={() => toggleBroker(broker)}><Checkbox checked={selectedBrokers.includes(broker)} /><ListItemText primary={broker} /></MenuItem>))}</Menu>
           </div>
-          {(selectedMarkets.length > 0 || selectedBrokers.length > 0) && (
-            <Button variant="contained" color="secondary" onClick={() => { setSelectedMarkets([]); setSelectedBrokers([]); }}>Reset Filters</Button>
+          {(selectedMarkets.length > 0 || selectedBrokers.length > 0 || !!dateRange) && (
+            <Button
+              variant="contained"
+              color="secondary"
+              onClick={() => {
+                setSelectedMarkets([]);
+                setSelectedBrokers([]);
+                setDateRange(null);
+              }}
+            >
+              Reset Filters
+            </Button>
           )}
         </Box>
         <Button variant="contained" startIcon={<Download />}>Export</Button>

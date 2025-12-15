@@ -49,7 +49,7 @@ export const createStrategy = async (req, res) => {
     const userId = req.user.id;
     const { 
       name, segment, capital, symbol, symbolValue, legs, 
-      description, type, madeBy 
+      description, type, madeBy, price
     } = req.body;
 
     // Get user's name for createdBy field
@@ -71,7 +71,8 @@ export const createStrategy = async (req, res) => {
       isActive: true,
       isRunning: false,
       isPublic: type === 'Public',
-      isFavorite: false
+      isFavorite: false,
+      price: price || null
     });
 
     // Emit real-time update

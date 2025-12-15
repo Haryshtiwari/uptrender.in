@@ -26,10 +26,13 @@ import Notifications from './Notifications';
 import Profile from './Profile';
 import WalletBalanceNav from '../../horizontal/header/WalletBalanceNav';
 import Customizer from '../../../full/shared/customizer/Customizer'; 
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
   const lgUp = useMediaQuery((theme) => theme.breakpoints.up('lg'));
   const lgDown = useMediaQuery((theme) => theme.breakpoints.down('lg'));
+
+  const navigate = useNavigate();
 
   const TopbarHeight = config.topbarHeight;
 
@@ -85,7 +88,7 @@ const Header = () => {
 
           <Stack spacing={1} direction="row" alignItems="center">
             {/* Wallet balance for quick view */}
-            <WalletBalanceNav />
+            <WalletBalanceNav onClick={() => navigate('/user/plan-info')} compact />
             {activeMode === 'light' ? (
               <IconButton size="large" color="inherit" onClick={() => setActiveMode('dark')}>
                 <IconMoon size="21" stroke="1.5" />
@@ -96,16 +99,6 @@ const Header = () => {
               </IconButton>
             )}
 
-            {/* Settings */}
-            <Tooltip title="Theme Settings">
-              <IconButton
-                size="large"
-                color="inherit"
-                onClick={() => setCustomizerOpen(!customizerOpen)}
-              >
-                <IconSettings size="21" stroke="1.5" />
-              </IconButton>
-            </Tooltip>
 
             <Notifications />
             {/* {lgDown && <MobileRightSidebar />} */}

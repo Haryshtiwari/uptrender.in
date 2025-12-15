@@ -24,7 +24,8 @@ import {
   generateStrategyCode
 } from '../controllers/strategyController.js';
 import { 
-  createStrategyValidation, 
+  createStrategyValidation,
+  updateStrategyValidation,
   idParamValidation,
   paginationValidation
 } from '../middleware/validation.js';
@@ -46,7 +47,7 @@ router.get('/drafts', authenticate, getUserDrafts);
 router.get('/', authenticate, paginationValidation, getUserStrategies);
 router.post('/', authenticate, createStrategyValidation, createStrategy);
 router.get('/:id', authenticate, idParamValidation, getStrategyById);
-router.put('/:id', authenticate, idParamValidation, createStrategyValidation, updateStrategy);
+router.put('/:id', authenticate, idParamValidation, updateStrategyValidation, updateStrategy);
 router.delete('/:id', authenticate, idParamValidation, deleteStrategy);
 router.post('/:id/toggle-running', authenticate, idParamValidation, toggleStrategyRunning);
 router.post('/:id/toggle-favorite', authenticate, idParamValidation, toggleFavorite);

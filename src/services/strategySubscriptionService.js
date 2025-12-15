@@ -52,9 +52,9 @@ class StrategySubscriptionService {
   /**
    * Update subscription (only lots)
    */
-  async updateSubscription(subscriptionId, lots) {
+  async updateSubscription(subscriptionId, payload) {
     try {
-      const response = await apiClient.put(API_ROUTES.subscriptions.byId(subscriptionId), { lots });
+      const response = await apiClient.put(API_ROUTES.subscriptions.byId(subscriptionId), payload);
       return {
         success: true,
         data: response.data.data || response.data,

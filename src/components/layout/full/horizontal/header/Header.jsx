@@ -26,6 +26,7 @@ import config from '../../../../context/config';
 import { CustomizerContext } from '../../../../context/CustomizerContext';
 import { ProductProvider } from '../../../../context/EcommerceContext';
 import Customizer from '../../../full/shared/customizer/Customizer'; 
+import { useNavigate } from 'react-router-dom';
 
 const Header = () => {
   const lgDown = useMediaQuery((theme) => theme.breakpoints.down('lg'));
@@ -38,6 +39,8 @@ const Header = () => {
     activeMode,
     setActiveMode,
   } = React.useContext(CustomizerContext);
+
+  const navigate = useNavigate();
 
   const TopbarHeight = config.topbarHeight;
 
@@ -89,7 +92,7 @@ const Header = () => {
             {/* Right Icons */}
             <Stack direction="row" spacing={1} alignItems="center">
               {/* Wallet Balance */}
-              <WalletBalanceNav />
+              <WalletBalanceNav onClick={() => navigate('/user/plan-info')} compact />
 
               {/* Theme toggle */}
               <Tooltip title="Toggle Light/Dark Mode">
@@ -102,16 +105,6 @@ const Header = () => {
                 </IconButton>
               </Tooltip>
 
-              {/* Theme Settings */}
-              <Tooltip title="Theme Settings">
-                <IconButton
-                  size="large"
-                  color="inherit"
-                  onClick={() => setCustomizerOpen(!customizerOpen)}
-                >
-                  <IconSettings size="21" stroke="1.5" />
-                </IconButton>
-              </Tooltip>
 
               <Notifications />
               <Profile />
