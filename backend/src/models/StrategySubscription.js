@@ -32,6 +32,11 @@ const StrategySubscription = sequelize.define('StrategySubscription', {
     type: DataTypes.BOOLEAN,
     defaultValue: true
   },
+  tradeMode: {
+    type: DataTypes.ENUM('paper', 'live'),
+    defaultValue: 'paper',
+    allowNull: true
+  },
   subscribedAt: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
@@ -45,6 +50,7 @@ const StrategySubscription = sequelize.define('StrategySubscription', {
     { fields: ['userId'] },
     { fields: ['strategyId'] },
     { fields: ['isActive'] },
+    { fields: ['tradeMode'] },
     { unique: true, fields: ['userId', 'strategyId'] }
   ]
 });

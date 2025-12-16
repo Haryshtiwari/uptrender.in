@@ -31,7 +31,6 @@ import { Wifi, WifiOff } from "@mui/icons-material";
 import { useNavigate } from 'react-router-dom';
 import Scrollbar from "../../../components/custom-scroll/Scrollbar";
 import StatsOverview from "../components/StatsOverview";
-import PerformanceChart from "../components/PerformanceChart";
 import StrategyTable from "../components/StrategyTable";
 import TopSubscribedStrategies from "../components/TopSubscribedStrategies";
 import Breadcrumb from "../../../components/layout/full/shared/breadcrumb/Breadcrumb";
@@ -53,7 +52,6 @@ const StrategyDashboard = () => {
   const [bulkActionLoading, setBulkActionLoading] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [timeRange, setTimeRange] = useState("30d");
 
   // Fetch top performers
   const fetchTopPerformers = async () => {
@@ -166,113 +164,117 @@ const StrategyDashboard = () => {
 
         {/* Main Grid */}
         <Grid container spacing={3} mt={1}>
-          {/* Left Column */}
-          <Grid size={{xs:12,md:12,sm:12,lg:7}}>
-            <Box display="flex" flexDirection="column" gap={3}>
-              <PerformanceChart timeRange={timeRange} setTimeRange={setTimeRange} />
-
-              {/* Strategy Table */}
-              <Card>
-                <CardHeader
-                  title={
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <Target size={20} />
-                      <Typography variant="h6">Active Strategies</Typography>
-                    </Box>
-                  }
-                  action={
-                    <Box display="flex" gap={2}>
-                      <TextField
-                        size="small"
-                        placeholder="Search strategies..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <Search size={16} />
-                            </InputAdornment>
-                          ),
-                        }}
-                      />
-                      <FormControl size="small" sx={{ minWidth: 120 }}>
-                        <InputLabel>Status</InputLabel>
-                        <Select
-                          value={filterStatus}
-                          onChange={(e) => setFilterStatus(e.target.value)}
-                          label="Status"
-                          startAdornment={<Filter size={16} style={{ marginRight: 4 }} />}
-                        >
-                          <MenuItem value="all">All</MenuItem>
-                          <MenuItem value="active">Active</MenuItem>
-                          <MenuItem value="paused">Paused</MenuItem>
-                          <MenuItem value="stopped">Stopped</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Box>
-                  }
+          {/* Active Strategies - Full Width */}
+          <Grid size={12}>
+            <Card>
+              <CardHeader
+                title={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Target size={20} />
+                    <Typography variant="h6">Active Strategies</Typography>
+                  </Box>
+                }
+                action={
+                  <Box display="flex" gap={2}>
+                    <TextField
+                      size="small"
+                      placeholder="Search strategies..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <Search size={16} />
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <InputLabel>Status</InputLabel>
+                      <Select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        label="Status"
+                        startAdornment={<Filter size={16} style={{ marginRight: 4 }} />}
+                      >
+                        <MenuItem value="all">All</MenuItem>
+                        <MenuItem value="active">Active</MenuItem>
+                        <MenuItem value="paused">Paused</MenuItem>
+                        <MenuItem value="stopped">Stopped</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Box>
+                }
+              />
+              <CardContent>
+                <StrategyTable 
+                  key={refreshKey}
+                  searchTerm={searchTerm} 
+                  filterStatus={filterStatus} 
+                  onRefresh={() => {
+                    setRefreshKey(prev => prev + 1);
+                    fetchTopPerformers();
+                  }}
                 />
-                <CardContent>
-                  <StrategyTable 
-                    key={refreshKey}
-                    searchTerm={searchTerm} 
-                    filterStatus={filterStatus} 
-                    onRefresh={() => {
-                      setRefreshKey(prev => prev + 1);
-                      fetchTopPerformers();
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            </Box>
+              </CardContent>
+            </Card>
           </Grid>
 
-          {/* Right Column */}
-          <Grid size={{xs:12,md:12,sm:12,lg:5}}>
-            <Box display="flex" flexDirection="column" gap={3}>
-              {/* Quick Actions */}
-              <Card>
-                <CardHeader title="Quick Actions" />
-                <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                  <Button 
-                    fullWidth 
-                    variant="outlined" 
-                    startIcon={bulkActionLoading ? <CircularProgress size={16} /> : <Play />}
-                    onClick={() => handleBulkAction('start')}
-                    disabled={bulkActionLoading}
-                  >
-                    Start All Strategies
-                  </Button>
-                  <Button 
-                    fullWidth 
-                    variant="outlined" 
-                    startIcon={bulkActionLoading ? <CircularProgress size={16} /> : <Pause />}
-                    onClick={() => handleBulkAction('pause')}
-                    disabled={bulkActionLoading}
-                  >
-                    Pause All Strategies
-                  </Button>
-                  <Button 
-                    fullWidth 
-                    variant="outlined" 
-                    startIcon={<Settings />}
-                    onClick={() => navigate('/admin/settings')}
-                  >
-                    Global Settings
-                  </Button>
-                  <Button 
-                    fullWidth 
-                    variant="outlined" 
-                    startIcon={<BarChart3 />}
-                    onClick={() => setExportDialogOpen(true)}
-                  >
-                    Analytics Report
-                  </Button>
-                </CardContent>
-              </Card>
+          {/* Quick Actions and Top Performers Row */}
+          <Grid size={{xs:12,md:6,sm:12,lg:6}}>
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader title="Quick Actions" />
+              <CardContent sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                <Button 
+                  fullWidth 
+                  variant="outlined" 
+                  startIcon={bulkActionLoading ? <CircularProgress size={16} /> : <Play />}
+                  onClick={() => handleBulkAction('start')}
+                  disabled={bulkActionLoading}
+                >
+                  Start All Strategies
+                </Button>
+                <Button 
+                  fullWidth 
+                  variant="outlined" 
+                  startIcon={bulkActionLoading ? <CircularProgress size={16} /> : <Pause />}
+                  onClick={() => handleBulkAction('pause')}
+                  disabled={bulkActionLoading}
+                >
+                  Pause All Strategies
+                </Button>
+                <Button 
+                  fullWidth 
+                  variant="contained" 
+                  startIcon={<Target />}
+                  onClick={() => navigate('/admin/create')}
+                >
+                  Create Strategy
+                </Button>
+                <Button 
+                  fullWidth 
+                  variant="outlined" 
+                  startIcon={<Settings />}
+                  onClick={() => navigate('/admin/settings')}
+                >
+                  Global Settings
+                </Button>
+                <Button 
+                  fullWidth 
+                  variant="outlined" 
+                  startIcon={<BarChart3 />}
+                  onClick={() => setExportDialogOpen(true)}
+                >
+                  Analytics Report
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
 
-              {/* Top Performers */}
-              <Card>
+          {/* Top Performers Column */}
+          <Grid size={{xs:12,md:6,sm:12,lg:6}}>
+            <Card>
                 <CardHeader
                   title={
                     <Box display="flex" alignItems="center" gap={1}>
@@ -337,10 +339,6 @@ const StrategyDashboard = () => {
                   )}
                 </Scrollbar>
               </Card>
-
-              {/* Top Subscribed Strategies */}
-              <TopSubscribedStrategies />
-            </Box>
           </Grid>
         </Grid>
 

@@ -3,8 +3,8 @@ import process from 'process';
 
 const sequelize = new Sequelize(
   process.env.DB_NAME || 'algo_trading_db',
-  process.env.DB_USER || 'root',
-  process.env.DB_PASSWORD || 'Root@12345',
+  process.env.DB_USER || 'Quants',
+  process.env.DB_PASSWORD || 'Quants@4897',
   {
     host: process.env.DB_HOST || 'localhost',
     port: process.env.DB_PORT || 3306,

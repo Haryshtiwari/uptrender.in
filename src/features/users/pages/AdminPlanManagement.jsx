@@ -120,20 +120,33 @@ const AdminPlanManagement = () => {
       setEditMode(true);
       setSelectedPlan(plan);
       setFormData({
-        name: plan.name,
-        description: plan.description,
-        price: plan.price.toString(),
-        duration: plan.duration,
-        durationType: plan.durationType,
-        walletBalance: plan.walletBalance.toString(),
-        features: plan.features,
-        isPopular: plan.isPopular,
-        isActive: plan.isActive,
-        planType: plan.planType,
-        maxStrategies: plan.maxStrategies.toString(),
-        maxTrades: plan.maxTrades.toString(),
-        apiAccess: plan.apiAccess,
-        priority: plan.priority,
+        name: plan.name || '',
+        description: plan.description || '',
+        price: (plan.price || 0).toString(),
+        duration: plan.duration || 30,
+        durationType: plan.durationType || 'days',
+        walletBalance: (plan.walletBalance || 0).toString(),
+        features: (() => {
+          if (Array.isArray(plan.features)) {
+            return plan.features;
+          }
+          if (typeof plan.features === 'string') {
+            try {
+              const parsed = JSON.parse(plan.features);
+              return Array.isArray(parsed) ? parsed : [plan.features];
+            } catch {
+              return [plan.features];
+            }
+          }
+          return [''];
+        })(),
+        isPopular: plan.isPopular || false,
+        isActive: plan.isActive !== undefined ? plan.isActive : true,
+        planType: plan.planType || 'basic',
+        maxStrategies: (plan.maxStrategies || '').toString(),
+        maxTrades: (plan.maxTrades || '').toString(),
+        apiAccess: plan.apiAccess || false,
+        priority: plan.priority || 'standard',
       });
     } else {
       setEditMode(false);
@@ -172,7 +185,8 @@ const AdminPlanManagement = () => {
   };
 
   const handleFeatureChange = (index, value) => {
-    const newFeatures = [...formData.features];
+    const currentFeatures = Array.isArray(formData.features) ? formData.features : [''];
+    const newFeatures = [...currentFeatures];
     newFeatures[index] = value;
     setFormData(prev => ({
       ...prev,
@@ -183,12 +197,13 @@ const AdminPlanManagement = () => {
   const addFeature = () => {
     setFormData(prev => ({
       ...prev,
-      features: [...prev.features, '']
+      features: [...(Array.isArray(prev.features) ? prev.features : ['']), '']
     }));
   };
 
   const removeFeature = (index) => {
-    const newFeatures = formData.features.filter((_, i) => i !== index);
+    const currentFeatures = Array.isArray(formData.features) ? formData.features : [''];
+    const newFeatures = currentFeatures.filter((_, i) => i !== index);
     setFormData(prev => ({
       ...prev,
       features: newFeatures
@@ -707,7 +722,7 @@ const AdminPlanManagement = () => {
                 </Typography>
                 <Divider sx={{ mb: 2 }} />
                 
-                {formData.features.map((feature, index) => (
+                {(Array.isArray(formData.features) ? formData.features : []).map((feature, index) => (
                   <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
                     <TextField
                       fullWidth
@@ -718,7 +733,7 @@ const AdminPlanManagement = () => {
                     <Button
                       color="error"
                       onClick={() => removeFeature(index)}
-                      disabled={formData.features.length === 1}
+                      disabled={(Array.isArray(formData.features) ? formData.features : []).length === 1}
                     >
                       Remove
                     </Button>

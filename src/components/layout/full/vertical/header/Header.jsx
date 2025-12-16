@@ -88,7 +88,7 @@ const Header = () => {
 
           <Stack spacing={1} direction="row" alignItems="center">
             {/* Wallet balance for quick view */}
-            <WalletBalanceNav onClick={() => navigate('/user/plan-info')} compact />
+            <WalletBalanceNav onClick={() => navigate('/user/plan-info')} />
             {activeMode === 'light' ? (
               <IconButton size="large" color="inherit" onClick={() => setActiveMode('dark')}>
                 <IconMoon size="21" stroke="1.5" />

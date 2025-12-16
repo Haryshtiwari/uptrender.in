@@ -1411,7 +1411,14 @@ export default function MarketPlace() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar open={snack.open} autoHideDuration={3000} onClose={() => setSnack((s) => ({ ...s, open: false }))} message={snack.message} />
+      <Snackbar 
+        open={snack.open} 
+        autoHideDuration={3000} 
+        onClose={() => setSnack((s) => ({ ...s, open: false }))} 
+        message={snack.message}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ mt: 8, mr: 2 }}
+      />
       </Box>
     </Box></>
   );

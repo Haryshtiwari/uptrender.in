@@ -72,9 +72,14 @@ export function AuthProvider({ children }) {
         // Check if token is expired
         const currentTime = Date.now() / 1000;
         if (payload.exp < currentTime) {
-          console.log('[AuthProvider] Token expired, refreshing...');
-          // Token expired, try to refresh
-          handleTokenRefresh();
+          console.log('[AuthProvider] Token expired, clearing auth');
+          // Token expired, clear and set loading false
+          clearTokens();
+          setToken(null);
+          setRefreshToken(null);
+          setRole(null);
+          setUser(null);
+          setIsLoading(false);
           return;
         }
 
@@ -82,9 +87,20 @@ export function AuthProvider({ children }) {
         setRole(payload.role);
 
         // Try to fetch full profile from backend for richer user data
+        // Set a timeout to ensure loading state doesn't hang
+        const timeoutId = setTimeout(() => {
+          console.log('[AuthProvider] Profile fetch timeout, using token payload');
+          if (!user) {
+            setUser(payload);
+            setIsLoading(false);
+          }
+        }, 5000); // 5 second timeout
+
         try {
           console.log('[AuthProvider] Fetching user profile...');
           const profileResult = await authService.getProfile();
+          clearTimeout(timeoutId);
+          
           if (profileResult.success && profileResult.user) {
             console.log('[AuthProvider] Profile fetched successfully:', { role: profileResult.user.role });
             setUser(profileResult.user);
@@ -94,6 +110,7 @@ export function AuthProvider({ children }) {
             setUser(payload);
           }
         } catch (err) {
+          clearTimeout(timeoutId);
           console.log('[AuthProvider] Profile fetch error, using token payload:', err.message);
           // If profile fetch fails, still set basic token payload
           setUser(payload);
@@ -103,6 +120,8 @@ export function AuthProvider({ children }) {
         clearTokens();
         setToken(null);
         setRefreshToken(null);
+        setRole(null);
+        setUser(null);
       } finally {
         console.log('[AuthProvider] Auth loading complete');
         setIsLoading(false);

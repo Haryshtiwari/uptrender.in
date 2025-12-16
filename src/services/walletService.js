@@ -131,6 +131,29 @@ class WalletService {
       };
     }
   }
+
+  /**
+   * Admin transfer funds to user
+   */
+  async adminTransferFunds(userId, amount, description = '') {
+    try {
+      const response = await apiClient.post(`/wallet/admin/${userId}/transfer`, {
+        amount: parseFloat(amount),
+        description
+      });
+      return {
+        success: true,
+        data: response.data.data || response.data,
+        message: response.data.message || 'Transfer completed successfully'
+      };
+    } catch (error) {
+      console.error('Admin transfer funds error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Failed to transfer funds',
+      };
+    }
+  }
 }
 
 export const walletService = new WalletService();

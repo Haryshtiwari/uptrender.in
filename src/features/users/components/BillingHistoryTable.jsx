@@ -15,7 +15,8 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { Download as DownloadIcon, Receipt } from '@mui/icons-material';
+import { Download as DownloadIcon, Receipt, TrendingUp, TrendingDown } from '@mui/icons-material';
+import walletService from '../../../services/walletService';
 
 const BillingHistoryTable = ({ onDownloadInvoice }) => {
   const [billingHistory, setBillingHistory] = useState([]);
@@ -30,40 +31,18 @@ const BillingHistoryTable = ({ onDownloadInvoice }) => {
   const fetchBillingHistory = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with actual API call
-      // const response = await planService.getBillingHistory();
+      // Fetch actual wallet transactions
+      const response = await walletService.getTransactions({ limit: 100, page: 1 });
       
-      // Mock data
-      const mockData = [
-        {
-          id: 1,
-          date: '2024-01-15',
-          description: 'Pro Plan - Monthly',
-          amount: 49.99,
-          status: 'paid',
-          invoiceId: 'INV-2024-001',
-        },
-        {
-          id: 2,
-          date: '2023-12-15',
-          description: 'Pro Plan - Monthly',
-          amount: 49.99,
-          status: 'paid',
-          invoiceId: 'INV-2023-312',
-        },
-        {
-          id: 3,
-          date: '2023-11-15',
-          description: 'Basic Plan - Monthly',
-          amount: 19.99,
-          status: 'paid',
-          invoiceId: 'INV-2023-287',
-        },
-      ];
-      
-      setBillingHistory(mockData);
+      if (response.success && response.data) {
+        const transactions = Array.isArray(response.data) ? response.data : [];
+        setBillingHistory(transactions);
+      } else {
+        setBillingHistory([]);
+      }
     } catch (error) {
       console.error('Error fetching billing history:', error);
+      setBillingHistory([]);
     } finally {
       setLoading(false);
     }
@@ -78,16 +57,23 @@ const BillingHistoryTable = ({ onDownloadInvoice }) => {
     setPage(0);
   };
 
-  const getStatusChip = (status) => {
-    const statusConfig = {
-      paid: { color: 'success', label: 'Paid' },
-      pending: { color: 'warning', label: 'Pending' },
-      failed: { color: 'error', label: 'Failed' },
-      refunded: { color: 'info', label: 'Refunded' },
+  const getStatusChip = (type) => {
+    const typeConfig = {
+      Credit: { color: 'success', label: 'Credit', icon: <TrendingUp fontSize="small" /> },
+      Debit: { color: 'error', label: 'Debit', icon: <TrendingDown fontSize="small" /> },
+      credit: { color: 'success', label: 'Credit', icon: <TrendingUp fontSize="small" /> },
+      debit: { color: 'error', label: 'Debit', icon: <TrendingDown fontSize="small" /> },
     };
 
-    const config = statusConfig[status] || statusConfig.pending;
-    return <Chip label={config.label} color={config.color} size="small" />;
+    const config = typeConfig[type] || { color: 'default', label: type || 'N/A', icon: null };
+    return (
+      <Chip 
+        label={config.label} 
+        color={config.color} 
+        size="small" 
+        icon={config.icon}
+      />
+    );
   };
 
   const handleDownload = (invoiceId) => {
@@ -120,9 +106,9 @@ const BillingHistoryTable = ({ onDownloadInvoice }) => {
             <TableRow>
               <TableCell>Date</TableCell>
               <TableCell>Description</TableCell>
+              <TableCell>Type</TableCell>
               <TableCell align="right">Amount</TableCell>
-              <TableCell align="center">Status</TableCell>
-              <TableCell align="center">Invoice</TableCell>
+              <TableCell align="right">Balance</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -131,28 +117,38 @@ const BillingHistoryTable = ({ onDownloadInvoice }) => {
               .map((row) => (
                 <TableRow key={row.id} hover>
                   <TableCell>
-                    {new Date(row.date).toLocaleDateString('en-US', {
+                    {new Date(row.createdAt || row.date).toLocaleDateString('en-IN', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
                     })}
                   </TableCell>
-                  <TableCell>{row.description}</TableCell>
+                  <TableCell>
+                    <Typography variant="body2">
+                      {row.description || row.type || 'Transaction'}
+                    </Typography>
+                    {row.reference && (
+                      <Typography variant="caption" color="textSecondary">
+                        Ref: {row.reference}
+                      </Typography>
+                    )}
+                  </TableCell>
+                  <TableCell>{getStatusChip(row.type)}</TableCell>
                   <TableCell align="right">
-                    <Typography variant="body2" fontWeight={600}>
-                      ${row.amount.toFixed(2)}
+                    <Typography 
+                      variant="body2" 
+                      fontWeight={600}
+                      color={row.type === 'Credit' || row.type === 'credit' ? 'success.main' : 'error.main'}
+                    >
+                      {row.type === 'Credit' || row.type === 'credit' ? '+' : '-'}₹{Math.abs(Number(row.amount) || 0).toFixed(2)}
                     </Typography>
                   </TableCell>
-                  <TableCell align="center">{getStatusChip(row.status)}</TableCell>
-                  <TableCell align="center">
-                    <IconButton
-                      size="small"
-                      color="primary"
-                      onClick={() => handleDownload(row.invoiceId)}
-                      title="Download Invoice"
-                    >
-                      <DownloadIcon />
-                    </IconButton>
+                  <TableCell align="right">
+                    <Typography variant="body2" fontWeight={500}>
+                      ₹{Number(row.balanceAfter || 0).toFixed(2)}
+                    </Typography>
                   </TableCell>
                 </TableRow>
               ))}
@@ -160,7 +156,7 @@ const BillingHistoryTable = ({ onDownloadInvoice }) => {
         </Table>
       </TableContainer>
       <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
+        rowsPerPageOptions={[5, 10, 25, 50]}
         component="div"
         count={billingHistory.length}
         rowsPerPage={rowsPerPage}

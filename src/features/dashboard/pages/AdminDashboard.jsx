@@ -309,9 +309,10 @@ const AdminDashboard = () => {
 
   return (
     <PageContainer title="Admin Dashboard" description="Admin Dashboard Overview">
-      {/* Header with Breadcrumb and Refresh */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Breadcrumb title="Dashboard" items={BCrumb} />
+      <Breadcrumb title="Dashboard" items={BCrumb} />
+      
+      {/* Header with Refresh Button */}
+      <Box display="flex" justifyContent="flex-end" alignItems="center" mb={3}>
         <IconButton 
           onClick={handleRefresh} 
           disabled={refreshing}
@@ -443,30 +444,30 @@ const AdminDashboard = () => {
               <QuickActionButton
                 icon={<People />}
                 label="Manage Users"
-                onClick={() => navigate('/admin/dashboard/user-dashboard')}
+                onClick={() => navigate('/admin/user-profile')}
               />
               <QuickActionButton
                 icon={<ShowChart />}
                 label="View Trades"
-                onClick={() => navigate('/admin/dashboard/trade-dashboard')}
+                onClick={() => navigate('/admin/trade')}
                 color="info"
               />
               <QuickActionButton
                 icon={<Description />}
                 label="Strategy Management"
-                onClick={() => navigate('/admin/dashboard/strategy-dashboard')}
+                onClick={() => navigate('/admin/startegy-overview')}
                 color="success"
               />
               <QuickActionButton
                 icon={<SupportAgent />}
                 label="Support Tickets"
-                onClick={() => navigate('/admin/support')}
+                onClick={() => navigate('/admin/contact-support')}
                 color="warning"
               />
               <QuickActionButton
                 icon={<AccountBalanceWallet />}
                 label="Plans & Pricing"
-                onClick={() => navigate('/admin/plans')}
+                onClick={() => navigate('/admin/plan-management')}
                 color="secondary"
               />
             </Stack>
@@ -545,7 +546,7 @@ const AdminDashboard = () => {
               <Button 
                 variant="outlined" 
                 endIcon={<ArrowForward />}
-                onClick={() => navigate('/admin/dashboard/strategy-dashboard')}
+                onClick={() => navigate('/admin/startegy-overview')}
                 fullWidth
               >
                 View All Strategies
@@ -624,7 +625,7 @@ const AdminDashboard = () => {
                 variant="outlined" 
                 color="warning"
                 endIcon={<ArrowForward />}
-                onClick={() => navigate('/admin/support')}
+                onClick={() => navigate('/admin/contact-support')}
                 fullWidth
               >
                 Manage Support Tickets
@@ -694,7 +695,7 @@ const AdminDashboard = () => {
               <Button 
                 variant="text" 
                 endIcon={<ArrowForward />}
-                onClick={() => navigate('/admin/dashboard/user-dashboard')}
+                onClick={() => navigate('/admin/user-profile')}
                 fullWidth
               >
                 View All Users
@@ -761,7 +762,7 @@ const AdminDashboard = () => {
               <Button 
                 variant="text" 
                 endIcon={<ArrowForward />}
-                onClick={() => navigate('/admin/dashboard/trade-dashboard')}
+                onClick={() => navigate('/admin/trade')}
                 fullWidth
               >
                 View All Trades

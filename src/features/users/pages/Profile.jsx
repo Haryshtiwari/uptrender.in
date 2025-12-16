@@ -254,14 +254,145 @@ const ChangePasswordModal = ({ open, onClose, onSave, saving }) => {
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleClose} disabled={saving}>Cancel</Button>
-        <Button 
-          variant="contained" 
-          onClick={handleSave} 
-          disabled={saving} 
+        <Button onClick={handleClose} disabled={saving}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleSave}
+          disabled={saving}
           startIcon={saving ? <CircularProgress size={16} /> : null}
         >
           {saving ? 'Changing...' : 'Change Password'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+const KYCUploadModal = ({ open, onClose, profile, showToast }) => {
+  const [panFile, setPanFile] = useState(null);
+  const [aadhaarFile, setAadhaarFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+
+  const handlePanChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPanFile(file);
+    }
+  };
+
+  const handleAadhaarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAadhaarFile(file);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!panFile && !aadhaarFile) {
+      showToast('Please select at least one document to upload', 'warning');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // TODO: Implement actual upload API call here
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      showToast('Documents uploaded successfully', 'success');
+      setPanFile(null);
+      setAadhaarFile(null);
+      onClose();
+    } catch (error) {
+      showToast('Failed to upload documents', 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!uploading) {
+      setPanFile(null);
+      setAadhaarFile(null);
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Upload KYC Documents</DialogTitle>
+      <DialogContent dividers>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <Box>
+            <Typography variant="body2" color="textSecondary" gutterBottom>
+              PAN Card
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
+              <Button
+                variant="outlined"
+                component="label"
+                size="small"
+                startIcon={<FileText size={16} />}
+                disabled={uploading}
+              >
+                {panFile ? panFile.name : 'Select PAN'}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*,.pdf"
+                  onChange={handlePanChange}
+                />
+              </Button>
+              {profile.panDocument && (
+                <Chip label="Already Uploaded" color="success" size="small" icon={<CheckCircle size={16} />} />
+              )}
+            </Box>
+          </Box>
+          
+          <Divider />
+          
+          <Box>
+            <Typography variant="body2" color="textSecondary" gutterBottom>
+              Aadhaar Card
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mt: 1 }}>
+              <Button
+                variant="outlined"
+                component="label"
+                size="small"
+                startIcon={<FileText size={16} />}
+                disabled={uploading}
+              >
+                {aadhaarFile ? aadhaarFile.name : 'Select Aadhaar'}
+                <input
+                  type="file"
+                  hidden
+                  accept="image/*,.pdf"
+                  onChange={handleAadhaarChange}
+                />
+              </Button>
+              {profile.aadhaarDocument && (
+                <Chip label="Already Uploaded" color="success" size="small" icon={<CheckCircle size={16} />} />
+              )}
+            </Box>
+          </Box>
+
+          <Alert severity="info">
+            Accepted formats: JPG, PNG, PDF (Max 5MB)
+          </Alert>
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} disabled={uploading}>
+          Cancel
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleUpload}
+          disabled={uploading || (!panFile && !aadhaarFile)}
+          startIcon={uploading ? <CircularProgress size={16} /> : null}
+        >
+          {uploading ? 'Uploading...' : 'Upload'}
         </Button>
       </DialogActions>
     </Dialog>
@@ -273,6 +404,7 @@ const UserProfile = () => {
   const fileInputRef = useRef(null);
   const [editOpen, setEditOpen] = useState(false);
   const [avatarUploadOpen, setAvatarUploadOpen] = useState(false);
+  const [kycUploadOpen, setKycUploadOpen] = useState(false);
   const [sectionToEdit, setSectionToEdit] = useState("");
   const [sectionData, setSectionData] = useState({});
   const [profile, setProfile] = useState(null);
@@ -469,20 +601,12 @@ const UserProfile = () => {
               display: "flex",
               flexDirection: { xs: "row", sm: "column" },
               alignItems: "center",
-              justifyContent: { xs: "space-between", sm: "flex-end" },
+              justifyContent: { xs: "flex-end", sm: "flex-end" },
               gap: 1,
               width: { xs: "100%", sm: "auto" },
               mt: { xs: 2, sm: 0 },
             }}
           >
-            <Tooltip title="Toggle Active/Inactive">
-              <Switch
-                checked={profile.status === 'Active'}
-                onChange={(e) => handleStatusToggle(e.target.checked ? 'Active' : 'Inactive')}
-                color="success"
-              />
-            </Tooltip>
-
             <Button
               variant="contained"
               size="small"
@@ -561,61 +685,56 @@ const UserProfile = () => {
         </SectionCard>
 
         <SectionCard
-          title="Organization Details"
-          icon={<Building size={18} />}
-          onEdit={() => handleEditClick("Organization", {
-            organizationName: profile.organizationName,
-            incorporationNumber: profile.incorporationNumber,
-            taxId: profile.taxId,
-            gstNumber: profile.gstNumber,
-            panNumber: profile.panNumber,
-          })}
-        >
-          <LabelValueBox label="Organization Name" value={profile.organizationName} />
-          <LabelValueBox label="Incorporation Number" value={profile.incorporationNumber} />
-          <LabelValueBox label="Tax ID" value={profile.taxId} />
-          <LabelValueBox label="GST Number" value={profile.gstNumber} />
-          <LabelValueBox label="PAN Number" value={profile.panNumber} showCopy />
-        </SectionCard>
-
-        <SectionCard
-          title="Address Information"
-          icon={<MapPin size={18} />}
-          onEdit={() => handleEditClick("Address", {
-            address1: profile.address1,
-            address2: profile.address2,
-            city: profile.city,
-            state: profile.state,
-            country: profile.country,
-            postalCode: profile.postalCode,
-            contactPhone: profile.contactPhone,
-            contactEmail: profile.contactEmail,
-          })}
-        >
-          <LabelValueBox label="Address Line 1" value={profile.address1} />
-          <LabelValueBox label="Address Line 2" value={profile.address2} />
-          <LabelValueBox label="City" value={profile.city} />
-          <LabelValueBox label="State" value={profile.state} />
-          <LabelValueBox label="Country" value={profile.country} />
-          <LabelValueBox label="Postal Code" value={profile.postalCode} />
-          <LabelValueBox label="Contact Phone" value={profile.contactPhone} icon={<Phone size={16} />} />
-          <LabelValueBox label="Contact Email" value={profile.contactEmail} icon={<Mail size={16} />} />
-        </SectionCard>
-
-        <SectionCard
           title="KYC & Verification"
           icon={<FileText size={18} />}
-          onEdit={() => handleEditClick("KYC", {
-            kycStatus: profile.kycStatus,
-            kycLevel: profile.kycLevel,
-            documents: profile.documents,
-            verified: profile.verified,
-          })}
+          onEdit={() => setKycUploadOpen(true)}
+          editLabel="Upload Documents"
         >
-          <LabelValueBox label="KYC Status" value={profile.kycStatus} verified />
-          <LabelValueBox label="KYC Level" value={profile.kycLevel} />
-          <LabelValueBox label="Documents" value={profile.documents} />
-          <LabelValueBox label="Verified" value={profile.verified} verified />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body2" color="textSecondary">
+                Verification Status
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                {profile.panDocument && profile.aadhaarDocument ? (
+                  <>
+                    <CheckCircle size={20} color="green" />
+                    <Typography variant="body1" color="success.main" fontWeight={600}>
+                      Verified
+                    </Typography>
+                  </>
+                ) : (
+                  <>
+                    <Box
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        border: '2px solid',
+                        borderColor: 'warning.main',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <Typography variant="caption" color="warning.main">!</Typography>
+                    </Box>
+                    <Typography variant="body1" color="warning.main" fontWeight={600}>
+                      Unverified
+                    </Typography>
+                  </>
+                )}
+              </Box>
+            </Box>
+            {profile.panDocument && profile.aadhaarDocument && (
+              <Chip 
+                label="Documents Uploaded" 
+                color="success" 
+                size="small" 
+                variant="outlined"
+              />
+            )}
+          </Box>
         </SectionCard>
 
         <EditProfileModal
@@ -631,6 +750,13 @@ const UserProfile = () => {
           open={avatarUploadOpen}
           onClose={() => setAvatarUploadOpen(false)}
           onUpload={handleAvatarUpload}
+        />
+
+        <KYCUploadModal
+          open={kycUploadOpen}
+          onClose={() => setKycUploadOpen(false)}
+          profile={profile}
+          showToast={showToast}
         />
         
         <ChangePasswordModal

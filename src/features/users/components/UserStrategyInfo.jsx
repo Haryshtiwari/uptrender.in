@@ -29,6 +29,8 @@ import {
   DialogActions,
   Button,
   TextField,
+  Stack,
+  Divider,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -45,6 +47,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import AssignmentIcon from '@mui/icons-material/Assignment';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import { Close as CloseIcon } from '@mui/icons-material';
 
 import { useStrategies } from '../../../hooks/useStrategies';
 import { useToast } from '../../../hooks/useToast';
@@ -78,6 +83,31 @@ const UserStrategyInfo = () => {
   const [editSubscription, setEditSubscription] = useState(null);
   const [viewStrategy, setViewStrategy] = useState(null);
   const [lotValues, setLotValues] = useState({}); // Track lot value changes
+  
+  // Trade Mode state
+  const [tradeModeModal, setTradeModeModal] = useState({ 
+    open: false, 
+    strategy: null, 
+    subscription: null, 
+    type: null // 'strategy' or 'subscription'
+  });
+
+  // Load subscriptions function (moved to component level)
+  const loadSubscriptions = async () => {
+    setSubscriptionsLoading(true);
+    try {
+      const result = await strategySubscriptionService.getUserSubscriptions();
+      if (result.success) {
+        setSubscriptions(result.data);
+      } else {
+        console.error('Failed to load subscriptions:', result.error);
+      }
+    } catch (err) {
+      console.error('Error loading subscriptions:', err);
+    } finally {
+      setSubscriptionsLoading(false);
+    }
+  };
 
   const handleToggleActive = async (strategyId, currentStatus) => {
     try {
@@ -219,22 +249,6 @@ const UserStrategyInfo = () => {
 
   // Load subscriptions when component mounts or when returning from other pages
   useEffect(() => {
-    const loadSubscriptions = async () => {
-      setSubscriptionsLoading(true);
-      try {
-        const result = await strategySubscriptionService.getUserSubscriptions();
-        if (result.success) {
-          setSubscriptions(result.data);
-        } else {
-          console.error('Failed to load subscriptions:', result.error);
-        }
-      } catch (err) {
-        console.error('Error loading subscriptions:', err);
-      } finally {
-        setSubscriptionsLoading(false);
-      }
-    };
-
     loadSubscriptions();
     refresh(); // Also refresh user's own strategies
   }, [refresh]);
@@ -296,6 +310,51 @@ const UserStrategyInfo = () => {
       }
     } catch (err) {
       showToast(err.message || 'Failed to unsubscribe', 'error');
+    }
+  };
+
+  // Trade Mode Handlers
+  const handleTradeModeClick = (item, type) => {
+    setTradeModeModal({ 
+      open: true, 
+      strategy: type === 'strategy' ? item : null,
+      subscription: type === 'subscription' ? item : null,
+      type
+    });
+  };
+
+  const handleTradeModeClose = () => {
+    setTradeModeModal({ open: false, strategy: null, subscription: null, type: null });
+  };
+
+  const handleTradeModeConfirm = async (mode) => {
+    try {
+      const { strategy, subscription, type } = tradeModeModal;
+      
+      if (type === 'strategy' && strategy) {
+        // Update strategy trade mode
+        const result = await updateStrategy(strategy.id, { tradeMode: mode });
+        if (result?.success !== false) {
+          showToast(`Strategy set to ${mode} mode successfully`, 'success');
+          refresh();
+        } else {
+          showToast('Failed to update strategy trade mode', 'error');
+        }
+      } else if (type === 'subscription' && subscription) {
+        // Update subscription trade mode
+        const result = await strategySubscriptionService.updateSubscription(subscription.id, { tradeMode: mode });
+        if (result?.success !== false) {
+          showToast(`Subscription set to ${mode} mode successfully`, 'success');
+          loadSubscriptions();
+        } else {
+          showToast('Failed to update subscription trade mode', 'error');
+        }
+      }
+      
+      handleTradeModeClose();
+    } catch (error) {
+      console.error('Trade mode update error:', error);
+      showToast(error.message || 'Failed to update trade mode', 'error');
     }
   };
 
@@ -604,6 +663,22 @@ const UserStrategyInfo = () => {
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
+                          <Tooltip title={`Trade Mode: ${strategy.tradeMode === 'live' ? 'Live' : 'Paper'}`} arrow>
+                            <IconButton
+                              color={strategy.tradeMode === 'live' ? 'success' : 'info'}
+                              size="small"
+                              onClick={() => handleTradeModeClick(strategy, 'strategy')}
+                              sx={{ 
+                                bgcolor: strategy.tradeMode === 'live' ? 'success.light' : 'info.light',
+                                '&:hover': { 
+                                  bgcolor: strategy.tradeMode === 'live' ? 'success.dark' : 'info.dark',
+                                  color: 'white'
+                                }
+                              }}
+                            >
+                              {strategy.tradeMode === 'live' ? <TrendingUpIcon fontSize="small" /> : <AssignmentIcon fontSize="small" />}
+                            </IconButton>
+                          </Tooltip>
                         </Box>
                       </TableCell>
                     </TableRow>
@@ -630,20 +705,11 @@ const UserStrategyInfo = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <Box display="flex" alignItems="center">
-                          <Chip
-                            label={subscription.strategy?.isActive ? 'Active' : 'Inactive'}
-                            color={subscription.strategy?.isActive ? 'success' : 'error'}
-                            size="small"
-                          />
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            sx={{ ml: 1 }}
-                          >
-                            (Read-only)
-                          </Typography>
-                        </Box>
+                        <Chip
+                          label={subscription.strategy?.isActive ? 'Active' : 'Inactive'}
+                          color={subscription.strategy?.isActive ? 'success' : 'error'}
+                          size="small"
+                        />
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -703,6 +769,22 @@ const UserStrategyInfo = () => {
                               onClick={() => setUnsubscribeDialog({ open: true, subscriptionId: subscription.id })}
                             >
                               <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title={`Trade Mode: ${subscription.tradeMode === 'live' ? 'Live' : 'Paper'}`} arrow>
+                            <IconButton
+                              color={subscription.tradeMode === 'live' ? 'success' : 'info'}
+                              size="small"
+                              onClick={() => handleTradeModeClick(subscription, 'subscription')}
+                              sx={{ 
+                                bgcolor: subscription.tradeMode === 'live' ? 'success.light' : 'info.light',
+                                '&:hover': { 
+                                  bgcolor: subscription.tradeMode === 'live' ? 'success.dark' : 'info.dark',
+                                  color: 'white'
+                                }
+                              }}
+                            >
+                              {subscription.tradeMode === 'live' ? <TrendingUpIcon fontSize="small" /> : <AssignmentIcon fontSize="small" />}
                             </IconButton>
                           </Tooltip>
                         </Box>
@@ -806,6 +888,104 @@ const UserStrategyInfo = () => {
         onClose={() => setToggleStatusStrategy(null)}
         onConfirm={handleToggleActive}
       />
+
+      {/* Trade Mode Modal */}
+      <Dialog
+        open={tradeModeModal.open}
+        onClose={handleTradeModeClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">
+              Set Trade Mode
+            </Typography>
+            <IconButton onClick={handleTradeModeClose} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ py: 2 }}>
+            {tradeModeModal.strategy && (
+              <Typography variant="subtitle1" gutterBottom>
+                Strategy: {tradeModeModal.strategy.name}
+              </Typography>
+            )}
+            {tradeModeModal.subscription && (
+              <Typography variant="subtitle1" gutterBottom>
+                Subscribed Strategy: {tradeModeModal.subscription.strategy?.name}
+              </Typography>
+            )}
+            
+            <Typography variant="body2" color="text.secondary" mb={3}>
+              Choose how you want to execute trades for this strategy
+            </Typography>
+            
+            <Stack spacing={2}>
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  border: '1px solid', 
+                  borderColor: 'info.main', 
+                  borderRadius: 2, 
+                  bgcolor: 'info.light', 
+                  color: 'info.dark' 
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <AssignmentIcon />
+                  <Typography variant="h6">Paper Trading</Typography>
+                </Box>
+                <Typography variant="body2">
+                  Practice trading with virtual money. No real money involved. Perfect for testing strategies.
+                </Typography>
+              </Box>
+              
+              <Box 
+                sx={{ 
+                  p: 2, 
+                  border: '1px solid', 
+                  borderColor: 'success.main', 
+                  borderRadius: 2, 
+                  bgcolor: 'success.light', 
+                  color: 'success.dark' 
+                }}
+              >
+                <Box display="flex" alignItems="center" gap={1} mb={1}>
+                  <TrendingUpIcon />
+                  <Typography variant="h6">Live Trading</Typography>
+                </Box>
+                <Typography variant="body2">
+                  Execute real trades with actual money. Use this when you're confident about the strategy.
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={handleTradeModeClose} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => handleTradeModeConfirm('paper')} 
+            variant="outlined" 
+            color="info"
+            startIcon={<AssignmentIcon />}
+          >
+            Set Paper Trade
+          </Button>
+          <Button 
+            onClick={() => handleTradeModeConfirm('live')} 
+            variant="contained" 
+            color="success"
+            startIcon={<TrendingUpIcon />}
+          >
+            Set Live Trade
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Confirmation Dialog for Unsubscribe */}
       <Dialog

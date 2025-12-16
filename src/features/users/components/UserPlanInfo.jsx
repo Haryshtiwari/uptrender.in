@@ -29,7 +29,7 @@ import FlashOnIcon from "@mui/icons-material/FlashOn";
 import SecurityIcon from "@mui/icons-material/Security";
 import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import ArrowUpwardIcon from "@mui/icons-material/ArrowUpward";
-import { Tooltip, Switch } from "@mui/material";
+import { Tooltip } from "@mui/material";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -138,11 +138,6 @@ const UserPlanPage = () => {
     { name: "Used", value: planData.usedDays, color: "#1976d2" },
     { name: "Remaining", value: planData.remainingDays, color: "#e0e0e0" },
   ] : [];
-  
-  const [isActive, setIsActive] = useState(true);
-  const handleSwitchChange = () => {
-    setIsActive((prev) => !prev);
-  };
   
   const loading = walletLoading || planLoading;
   const error = walletError;
@@ -293,107 +288,7 @@ const UserPlanPage = () => {
   return (
     <Box sx={{ minHeight: "100vh" }}>
       <Grid container spacing={1} maxWidth="lg" margin="auto" direction="column">
-        {/* First Row: Plan Overview + Usage Overview */}
-        <Grid container spacing={3} >
-          {/* Plan Overview */}
-          <Grid size={{ xs: 12, md:7 }} >
-            <Card elevation={2}  >
-              <CardHeader
-      title={
-        <Typography variant="h6" display="flex" alignItems="center" gap={1}>
-          <EmojiEventsIcon sx={{ color: "gold" }} />
-          {planData.name}
-        </Typography>
-      }
-      subheader={`${planData.type} subscription • ${planData.price}/month`}
-      action={
-        <Tooltip title={isActive ? "Active" : "Inactive"}>
-          <Switch
-            checked={isActive}
-            onChange={handleSwitchChange}
-            color="success"
-          />
-        </Tooltip>
-      }
-    />
-              <CardContent>
-                <Grid container spacing={3} textAlign="center"  >
-                  <Grid size={{ xs: 12, sm:4 }} 
-                   
-                 >
-                    <Box bgcolor="secondary.light" p={4} borderRadius={2}>
-                      <Typography variant="h3" color="primary">
-                        {planData.totalDays}
-                      </Typography>
-                      <Typography variant="h5" color="text.primary">Total Days</Typography>
-                    </Box>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm:4 }}>
-                    <Box bgcolor="secondary.light" p={4} borderRadius={2}>
-                      <Typography variant="h3" color="orange">
-                        {planData.usedDays}
-                      </Typography>
-                      <Typography variant="h5" color="text.primary">Used Days</Typography>
-                    </Box>
-                  </Grid>
-                  <Grid size={{ xs: 12, sm:4 }}>
-                    <Box bgcolor="secondary.light" p={4} borderRadius={2}>
-                      <Typography variant="h3" color="green">
-                        {planData.remainingDays}
-                      </Typography>
-                      <Typography variant="h5" color="text.primary">Remaining </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-
-                <Box mt={3}>
-                  <Typography variant="body2" mb={1}>
-                    Usage Progress
-                  </Typography>
-                  <LinearProgress variant="determinate" value={usagePercentage} />
-                  <Box mt={1} display="flex" justifyContent="space-between">
-                    <Typography variant="caption">Plan Period</Typography>
-                    <Typography variant="caption">
-                      {planData.startDate} - {planData.endDate}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Usage Overview */}
-          <Grid size={{ xs: 12, md:5 }}>
-            <Card elevation={2}>
-              <CardHeader
-                title={
-                  <Typography variant="subtitle1" display="flex" alignItems="center">
-                    <AccessTimeIcon />
-                    Usage Overview
-                  </Typography>
-                }
-              />
-              <CardContent sx={{ textAlign: "center" }}>
-                <PieChart width={280} height={180}>
-                  <Pie
-                    data={chartData}
-                    dataKey="value"
-                    innerRadius={60}
-                    outerRadius={90}
-                  >
-                    {chartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-                <Typography variant="h6">{usagePercentage.toFixed(1)}%</Typography>
-                <Typography variant="body2">Plan Used</Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        {/* Second Row: Wallet + Plan Management */}
+        {/* Wallet + Plan Management + Payment Methods */}
         <Grid container spacing={3}>
           {/* Wallet Balance Overview */}
           <Grid size={{ xs: 12, md:4 }}>
@@ -414,12 +309,13 @@ const UserPlanPage = () => {
                   </Typography>
                   <Typography variant="body2" color="textSecondary">Available Balance</Typography>
                   <Button 
-                    variant="outlined" 
+                    variant="contained" 
                     color="primary" 
+                    startIcon={<AddCircleOutlineIcon />}
                     sx={{ mt: 3}}
-                    onClick={handleViewTransactionHistory}
+                    onClick={handleRazorpayPayment}
                   >
-                    View Transaction History
+                    Add Funds
                   </Button>
                 </Box>
               </CardContent>

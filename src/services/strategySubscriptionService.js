@@ -121,7 +121,7 @@ class StrategySubscriptionService {
   async getSubscribedStrategies() {
     try {
       const response = await apiClient.get(API_ROUTES.subscriptions.list, { 
-        params: { limit: 1000 } // Get all subscriptions
+        params: { limit: 100 } // Backend validation allows max 100
       });
       return {
         success: true,

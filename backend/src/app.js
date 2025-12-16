@@ -31,6 +31,7 @@ import supportRoutes from './routes/supportRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import strategySubscriptionRoutes from './routes/strategySubscriptionRoutes.js';
 import copyTradingRoutes from './routes/copyTradingRoutes.js';
+import chargeRoutes from './routes/chargeRoutes.js';
 
 const app = express();
 
@@ -144,6 +145,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/support', supportRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/copy-trading', copyTradingRoutes);
+app.use('/api/admin/charges', chargeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/dashboard/admin', adminDashboardRoutes);
 app.use('/api/dashboard/user', userDashboardRoutes);

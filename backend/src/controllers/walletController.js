@@ -364,3 +364,132 @@ export const getAllWallets = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch wallets' });
   }
 };
+
+// Admin transfer funds to user
+export const adminTransferFunds = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
+  try {
+    const adminId = req.user.id;
+    const { userId } = req.params;
+    const { amount, description = 'Admin wallet transfer' } = req.body;
+
+    // Validate amount
+    if (!amount || amount <= 0) {
+      await transaction.rollback();
+      return res.status(400).json({ error: 'Invalid amount' });
+    }
+
+    // Get admin wallet
+    let adminWallet = await Wallet.findOne({
+      where: { userId: adminId },
+      transaction
+    });
+
+    if (!adminWallet) {
+      adminWallet = await Wallet.create({
+        userId: adminId,
+        balance: 0,
+        currency: 'INR',
+        status: 'Active'
+      }, { transaction });
+    }
+
+    // Check admin balance
+    if (adminWallet.balance < amount) {
+      await transaction.rollback();
+      return res.status(400).json({ 
+        error: 'Insufficient balance in admin wallet',
+        adminBalance: adminWallet.balance,
+        required: amount
+      });
+    }
+
+    // Get or create user wallet
+    let userWallet = await Wallet.findOne({
+      where: { userId },
+      transaction
+    });
+
+    if (!userWallet) {
+      userWallet = await Wallet.create({
+        userId,
+        balance: 0,
+        currency: 'INR',
+        status: 'Active'
+      }, { transaction });
+    }
+
+    // Update balances
+    await adminWallet.update({
+      balance: parseFloat(adminWallet.balance) - parseFloat(amount)
+    }, { transaction });
+
+    await userWallet.update({
+      balance: parseFloat(userWallet.balance) + parseFloat(amount)
+    }, { transaction });
+
+    // Create admin debit transaction
+    await WalletTransaction.create({
+      walletId: adminWallet.id,
+      type: 'DEBIT',
+      amount: parseFloat(amount),
+      description: `${description} (Transfer to user ID: ${userId})`,
+      reference: `ADMIN_TRANSFER_${Date.now()}`,
+      status: 'COMPLETED'
+    }, { transaction });
+
+    // Create user credit transaction
+    await WalletTransaction.create({
+      walletId: userWallet.id,
+      type: 'CREDIT',
+      amount: parseFloat(amount),
+      description: `${description} (From admin)`,
+      reference: `ADMIN_TRANSFER_${Date.now()}`,
+      status: 'COMPLETED'
+    }, { transaction });
+
+    // Create notification for user
+    await Notification.create({
+      userId: userId,
+      title: 'Wallet Credit',
+      message: `₹${amount} has been credited to your wallet by admin`,
+      type: 'wallet_credit',
+      data: { amount }
+    }, { transaction });
+
+    await transaction.commit();
+
+    // Emit real-time updates
+    emitWalletUpdate(adminId, {
+      balance: adminWallet.balance - amount,
+      lastTransaction: { type: 'DEBIT', amount }
+    });
+
+    emitWalletUpdate(userId, {
+      balance: userWallet.balance + parseFloat(amount),
+      lastTransaction: { type: 'CREDIT', amount }
+    });
+
+    emitNotification(userId, {
+      title: 'Wallet Credit',
+      message: `₹${amount} credited by admin`,
+      type: 'wallet_credit'
+    });
+
+    res.json({
+      success: true,
+      message: 'Funds transferred successfully',
+      data: {
+        adminBalance: parseFloat(adminWallet.balance) - parseFloat(amount),
+        userBalance: parseFloat(userWallet.balance) + parseFloat(amount),
+        transferAmount: parseFloat(amount)
+      }
+    });
+
+  } catch (error) {
+    await transaction.rollback();
+    console.error('Admin transfer funds error:', error);
+    res.status(500).json({ error: 'Failed to transfer funds' });
+  }
+};

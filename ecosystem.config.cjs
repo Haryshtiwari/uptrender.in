@@ -4,7 +4,7 @@ module.exports = {
       name: 'uptrender-frontend',
       script: 'npx',
       args: 'serve -s dist -l 4000',
-      cwd: '/var/www/algo',
+      cwd: '/var/www/uptrender.in',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -16,7 +16,7 @@ module.exports = {
     {
       name: 'uptrender-backend',
       script: 'server.js',
-      cwd: '/var/www/algo/backend',
+      cwd: '/var/www/uptrender.in/backend',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -27,8 +27,8 @@ module.exports = {
         DB_HOST: 'localhost',
         DB_PORT: '3306',
         DB_NAME: 'algo_trading_db',
-        DB_USER: 'root',
-        DB_PASSWORD: 'Root@12345',
+        DB_USER: 'Quants',
+        DB_PASSWORD: 'Quants@4897',
         JWT_SECRET: 'your_super_secret_jwt_key_here_production_change_this',
         JWT_EXPIRES_IN: '24h'
       }

@@ -71,6 +71,11 @@ const Strategy = sequelize.define('Strategy', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+  tradeMode: {
+    type: DataTypes.ENUM('paper', 'live'),
+    defaultValue: 'paper',
+    allowNull: true
+  },
   isPublic: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
@@ -102,7 +107,8 @@ const Strategy = sequelize.define('Strategy', {
   indexes: [
     { fields: ['userId'] },
     { fields: ['segment'] },
-    { fields: ['isPublic'] }
+    { fields: ['isPublic'] },
+    { fields: ['tradeMode'] }
   ]
 });
 

@@ -8,7 +8,7 @@ export const getUserPlan = async (req, res) => {
 
     const plan = await Plan.findOne({
       where: { userId, isActive: true },
-      attributes: ['id', 'name', 'type', 'price', 'totalDays', 'usedDays', 'remainingDays', 'startDate', 'endDate', 'isActive']
+      attributes: ['id', 'name', 'type', 'price', 'totalDays', 'usedDays', 'remainingDays', 'startDate', 'endDate', 'isActive', 'createdAt', 'updatedAt']
     });
 
     if (!plan) {
@@ -19,9 +19,36 @@ export const getUserPlan = async (req, res) => {
       });
     }
 
+    // Calculate days dynamically
+    const startDate = new Date(plan.startDate);
+    const endDate = new Date(plan.endDate);
+    const today = new Date();
+    
+    // Calculate total days between start and end
+    const totalDays = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
+    
+    // Calculate used days from start to today
+    const usedDays = Math.max(0, Math.ceil((today - startDate) / (1000 * 60 * 60 * 24)));
+    
+    // Calculate remaining days
+    const remainingDays = Math.max(0, totalDays - usedDays);
+
+    // Update the plan with calculated values
+    await plan.update({
+      totalDays,
+      usedDays: Math.min(usedDays, totalDays),
+      remainingDays
+    });
+
+    // Return updated plan data
+    const updatedPlan = await Plan.findOne({
+      where: { id: plan.id },
+      attributes: ['id', 'name', 'type', 'price', 'totalDays', 'usedDays', 'remainingDays', 'startDate', 'endDate', 'isActive', 'createdAt', 'updatedAt']
+    });
+
     res.json({
       success: true,
-      data: plan
+      data: updatedPlan
     });
   } catch (error) {
     console.error('Get user plan error:', error);

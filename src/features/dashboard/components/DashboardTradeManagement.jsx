@@ -10,7 +10,16 @@ import {
   Typography,
   Button,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  IconButton,
+  Tooltip,
+  Stack,
 } from "@mui/material";
+import { Close as CloseIcon } from "@mui/icons-material";
 import { useState } from "react";
 import TablePagination from '@mui/material/TablePagination';
 import { isBuy } from '../../../utils/tradeUtils';
@@ -20,7 +29,9 @@ import { useToast } from "../../../hooks/useToast";
 import { useTrades } from "../../../hooks/useTrades";
 
 const DashboardTradeManagement = () => {
-  const [tab, setTab] = useState(1); // Defaulting to "Orders"
+  const [tab, setTab] = useState(0); // Defaulting to "Open Position"
+  const [slTpModal, setSlTpModal] = useState({ open: false, trade: null, type: null });
+  const [slTpValues, setSlTpValues] = useState({ sl: '', tp: '' });
   const { showSuccess, showError } = useToast();
   const { trades, loading, error, updateTrade, deleteTrade, refresh, goToPage, setLimit, pagination } = useTrades();
 
@@ -51,6 +62,40 @@ const DashboardTradeManagement = () => {
     } catch (error) {
       console.error('Close trade error:', error);
       showError(error.message || 'Failed to close trade');
+    }
+  };
+
+  const handleSlTpClick = (trade, type) => {
+    setSlTpModal({ open: true, trade, type });
+    setSlTpValues({
+      sl: trade.stopLoss || '',
+      tp: trade.takeProfit || ''
+    });
+  };
+
+  const handleSlTpClose = () => {
+    setSlTpModal({ open: false, trade: null, type: null });
+    setSlTpValues({ sl: '', tp: '' });
+  };
+
+  const handleSlTpSave = async () => {
+    try {
+      if (!updateTrade || !slTpModal.trade) {
+        showError('Update function not available');
+        return;
+      }
+
+      const updateData = {};
+      if (slTpValues.sl) updateData.stopLoss = parseFloat(slTpValues.sl);
+      if (slTpValues.tp) updateData.takeProfit = parseFloat(slTpValues.tp);
+
+      await updateTrade(slTpModal.trade.id, updateData);
+      showSuccess('SL/TP updated successfully');
+      handleSlTpClose();
+      if (refresh) refresh();
+    } catch (error) {
+      console.error('Update SL/TP error:', error);
+      showError(error.message || 'Failed to update SL/TP');
     }
   };
 
@@ -201,8 +246,32 @@ const DashboardTradeManagement = () => {
                         </TableCell>
                         <TableCell>{formatTime(trade.createdAt)}</TableCell>
                         <TableCell align="center">
-                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
-                            {trade.status === 'Pending' && (
+                          <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'center', flexWrap: 'wrap' }}>
+                            {tab === 0 && trade.status === 'Pending' && (
+                              <>
+                                <Tooltip title="Set Stop Loss / Take Profit">
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    color="primary"
+                                    onClick={() => handleSlTpClick(trade, 'both')}
+                                    sx={{ textTransform: 'none', minWidth: 'auto', px: 1 }}
+                                  >
+                                    SL/TP
+                                  </Button>
+                                </Tooltip>
+                                <Button
+                                  size="small"
+                                  variant="contained"
+                                  color="error"
+                                  onClick={() => handleClose(trade)}
+                                  sx={{ textTransform: 'none', minWidth: 'auto', px: 1 }}
+                                >
+                                  Close
+                                </Button>
+                              </>
+                            )}
+                            {tab === 1 && trade.status === 'Pending' && (
                               <Button
                                 size="small"
                                 variant="contained"
@@ -235,6 +304,83 @@ const DashboardTradeManagement = () => {
           )}
         </Box>
       </Scrollbar>
+
+      {/* SL/TP Modal */}
+      <Dialog
+        open={slTpModal.open}
+        onClose={handleSlTpClose}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h6">
+              Set Stop Loss & Take Profit
+            </Typography>
+            <IconButton onClick={handleSlTpClose} size="small">
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers>
+          <Box sx={{ py: 2 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Strategy: {slTpModal.trade?.symbol} ({slTpModal.trade?.strategy?.name})
+            </Typography>
+            <Typography variant="body2" color="text.secondary" mb={3}>
+              Set your profit and loss limits for this position
+            </Typography>
+            
+            <Stack spacing={3}>
+              <TextField
+                label="Stop Loss Amount (₹)"
+                value={slTpValues.sl}
+                onChange={(e) => setSlTpValues(prev => ({ ...prev, sl: e.target.value }))}
+                type="number"
+                fullWidth
+                placeholder="Enter stop loss amount"
+                helperText="Amount at which you want to limit your loss"
+                InputProps={{
+                  startAdornment: <Box sx={{ mr: 1, color: 'text.secondary' }}>₹</Box>
+                }}
+              />
+              
+              <TextField
+                label="Take Profit Amount (₹)"
+                value={slTpValues.tp}
+                onChange={(e) => setSlTpValues(prev => ({ ...prev, tp: e.target.value }))}
+                type="number"
+                fullWidth
+                placeholder="Enter take profit amount"
+                helperText="Amount at which you want to book your profit"
+                InputProps={{
+                  startAdornment: <Box sx={{ mr: 1, color: 'text.secondary' }}>₹</Box>
+                }}
+              />
+            </Stack>
+            
+            <Box mt={2} p={2} bgcolor="grey.50" borderRadius={1}>
+              <Typography variant="caption" color="text.secondary">
+                <strong>Current Position:</strong> ₹{parseFloat(slTpModal.trade?.price || 0).toFixed(2)} | 
+                <strong> P&L:</strong> ₹{parseFloat(slTpModal.trade?.pnl || 0).toFixed(2)}
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2, gap: 1 }}>
+          <Button onClick={handleSlTpClose} color="inherit">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSlTpSave} 
+            variant="contained" 
+            color="primary"
+            disabled={!slTpValues.sl && !slTpValues.tp}
+          >
+            Save SL/TP
+          </Button>
+        </DialogActions>
+      </Dialog>
     </DashboardCard>
   );
 };

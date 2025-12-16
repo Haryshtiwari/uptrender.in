@@ -92,7 +92,7 @@ const Header = () => {
             {/* Right Icons */}
             <Stack direction="row" spacing={1} alignItems="center">
               {/* Wallet Balance */}
-              <WalletBalanceNav onClick={() => navigate('/user/plan-info')} compact />
+              <WalletBalanceNav onClick={() => navigate('/user/plan-info')} />
 
               {/* Theme toggle */}
               <Tooltip title="Toggle Light/Dark Mode">

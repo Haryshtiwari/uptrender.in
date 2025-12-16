@@ -352,6 +352,28 @@ export const idParamValidation = [
   validate
 ];
 
+// User ID parameter validation
+export const userIdParamValidation = [
+  param('userId')
+    .isInt({ min: 1 }).withMessage('Invalid user ID parameter'),
+  validate
+];
+
+// Admin transfer validation
+export const adminTransferValidation = [
+  param('userId')
+    .isInt({ min: 1 }).withMessage('Invalid user ID'),
+  body('amount')
+    .isFloat({ min: 0.01 }).withMessage('Amount must be greater than 0')
+    .toFloat(),
+  body('description')
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ max: 255 }).withMessage('Description too long'),
+  validate
+];
+
 export default {
   validate,
   registerValidation,
@@ -369,5 +391,7 @@ export default {
   subscribeToPlanValidation,
   createPlanCatalogValidation,
   paginationValidation,
-  idParamValidation
+  idParamValidation,
+  userIdParamValidation,
+  adminTransferValidation
 };

@@ -20,11 +20,7 @@ import {
 } from "@mui/material";
 
 import StrategyOverview from "../../dashboard/components/StrategyOverview";
-import ProfitLossCard from "../components/ProfitLossCard";
-import Customers from "../components/Customers";
-import Followers from "../components/Followers";
 import EnhancedTable from "../components/EnhancedTable";
-import Trades from "../components/Trades";
 import Breadcrumb from "../../../components/layout/full/shared/breadcrumb/Breadcrumb";
 import { adminStrategyService } from "../../../services/adminStrategyService";
 import adminUserService from "../../../services/adminUserService";
@@ -307,30 +303,8 @@ const StrategyPage = () => {
               <Alert severity="info">No strategies found yet.</Alert>
             </Grid>
           )}
-          <Grid size={{ xs: 12, lg: 5 }} sx={{ mt: 2 }}>
-            <ProfitLossCard stats={strategyStats} />
-          </Grid>
 
-          {/* Row 2: Followers + Right Column with Trades + Customers */}
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <Followers
-              segmentStats={strategyStats?.bySegment}
-              recentStrategies={strategyStats?.recent}
-              selectedStrategy={selectedStrategy}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, lg: 4, md: 4 }}>
-            <Grid container spacing={2} direction="column">
-              <Grid item>
-                <Trades stats={strategyStats} />
-              </Grid>
-              <Grid item>
-                <Customers stats={strategyStats} />
-              </Grid>
-            </Grid>
-          </Grid>
-
-          {/* Row 3: Table */}
+          {/* Strategy Table */}
           <Grid size={12}>
             <EnhancedTable positions={segmentRows} openOrders={openOrderRows} />
           </Grid>

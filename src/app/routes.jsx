@@ -10,6 +10,7 @@ import { AdminStrategyRoutes, UserStrategyRoutes } from '../features/strategies'
 import { AdminDasRoutes, UserDasRoutes } from '../features/dashboard';
 import { AdminApiRoutes, UserApiRoutes } from '../features/api';
 import { AdminCopyTradingRoutes, UserCopyTradingRoutes } from '../features/copy-trading';
+import { AdminChargesRoutes } from '../features/admin';
 import { UserPricingRoutes } from '../features/pricing';
 import AuthRoutes from '../features/auth';
 
@@ -37,6 +38,7 @@ const AppRoutes = () => {
       ...AdminDasRoutes,
       ...AdminApiRoutes,
       ...AdminCopyTradingRoutes,
+      ...AdminChargesRoutes,
     ],
   },
   {

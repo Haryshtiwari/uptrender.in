@@ -9,12 +9,15 @@ import {
   getWalletStats,
   freezeWallet,
   unfreezeWallet,
-  getAllWallets
+  getAllWallets,
+  adminTransferFunds
 } from '../controllers/walletController.js';
 import { 
   addFundsValidation, 
   withdrawFundsValidation, 
   idParamValidation,
+  userIdParamValidation,
+  adminTransferValidation,
   paginationValidation
 } from '../middleware/validation.js';
 
@@ -29,7 +32,8 @@ router.post('/withdraw', authenticate, withdrawFundsValidation, withdrawFunds);
 
 // Admin routes
 router.get('/admin/all', authenticate, roleCheck(['Admin']), paginationValidation, getAllWallets);
-router.post('/admin/:userId/freeze', authenticate, roleCheck(['Admin']), idParamValidation, freezeWallet);
-router.post('/admin/:userId/unfreeze', authenticate, roleCheck(['Admin']), idParamValidation, unfreezeWallet);
+router.post('/admin/:userId/freeze', authenticate, roleCheck(['Admin']), userIdParamValidation, freezeWallet);
+router.post('/admin/:userId/unfreeze', authenticate, roleCheck(['Admin']), userIdParamValidation, unfreezeWallet);
+router.post('/admin/:userId/transfer', authenticate, roleCheck(['Admin']), adminTransferValidation, adminTransferFunds);
 
 export default router;

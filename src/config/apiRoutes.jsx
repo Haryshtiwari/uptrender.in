@@ -131,11 +131,11 @@ export const API_ROUTES = {
     base: '/notifications',
     byId: (id) => `/notifications/${id}`,
     list: '/notifications',
-    unread: '/notifications/unread',
+    unreadCount: '/notifications/unread-count',
     markRead: (id) => `/notifications/${id}/read`,
     markAllRead: '/notifications/mark-all-read',
     delete: (id) => `/notifications/${id}`,
-    preferences: '/notifications/preferences',
+    // preferences endpoints are not implemented on backend currently
   },
 
   // Admin Routes

@@ -40,7 +40,6 @@ import {
   Edit,
   Delete,
   Visibility,
-  LockReset,
   Close,
   People,
   PersonAdd,
@@ -49,6 +48,7 @@ import {
 } from '@mui/icons-material';
 import Breadcrumb from '../../../components/layout/full/shared/breadcrumb/Breadcrumb';
 import adminUserService from '../../../services/adminUserService';
+import walletService from '../../../services/walletService';
 import { formatDistanceToNow, format } from 'date-fns';
 
 const BCrumb = [
@@ -89,6 +89,7 @@ const User = () => {
     phone: '',
     role: 'user',
     status: 'Active',
+    walletAmount: '',
   });
 
   const [addFormData, setAddFormData] = useState({
@@ -198,6 +199,7 @@ const User = () => {
       phone: user.phone || '',
       role: user.role || 'user',
       status: user.status || 'Active',
+      walletAmount: '',
     });
     setEditModalOpen(true);
   };
@@ -211,15 +213,37 @@ const User = () => {
     
     setActionLoading(true);
     try {
-      const result = await adminUserService.updateUser(selectedUser.id, editFormData);
-      if (result.success) {
-        showSnackbar('User updated successfully');
-        setEditModalOpen(false);
-        fetchUsers();
-      } else {
+      // Prepare user data without wallet amount
+      const { walletAmount, ...userData } = editFormData;
+      
+      // Update user details
+      const result = await adminUserService.updateUser(selectedUser.id, userData);
+      if (!result.success) {
         showSnackbar(result.error || 'Failed to update user', 'error');
+        return;
       }
+
+      // Handle wallet transfer if amount is provided
+      if (walletAmount && parseFloat(walletAmount) > 0) {
+        const transferResult = await walletService.adminTransferFunds(
+          selectedUser.id,
+          walletAmount,
+          `Admin wallet transfer to ${selectedUser.name || selectedUser.email}`
+        );
+        
+        if (transferResult.success) {
+          showSnackbar(`User updated and ₹${walletAmount} transferred to wallet successfully`);
+        } else {
+          showSnackbar(`User updated but wallet transfer failed: ${transferResult.error}`, 'warning');
+        }
+      } else {
+        showSnackbar('User updated successfully');
+      }
+      
+      setEditModalOpen(false);
+      fetchUsers();
     } catch (err) {
+      console.error('Edit user error:', err);
       showSnackbar('Error updating user', 'error');
     } finally {
       setActionLoading(false);
@@ -252,22 +276,7 @@ const User = () => {
     }
   };
 
-  // Reset password
-  const handleResetPassword = async (userId) => {
-    setActionLoading(true);
-    try {
-      const result = await adminUserService.resetUserPassword(userId);
-      if (result.success) {
-        showSnackbar(result.message || 'Password reset email sent successfully');
-      } else {
-        showSnackbar(result.error || 'Failed to reset password', 'error');
-      }
-    } catch (err) {
-      showSnackbar('Error resetting password', 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+
 
   // Add user
   const handleAddFormChange = (field, value) => {
@@ -538,11 +547,6 @@ const User = () => {
                                 <Edit fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Reset Password">
-                              <IconButton size="small" color="warning" onClick={() => handleResetPassword(user.id)}>
-                                <LockReset fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
                             <Tooltip title="Delete User">
                               <IconButton size="small" color="error" onClick={() => handleDeleteUser(user)}>
                                 <Delete fontSize="small" />
@@ -634,13 +638,6 @@ const User = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button 
-            startIcon={actionLoading ? <CircularProgress size={16} /> : <LockReset />} 
-            onClick={() => selectedUser && handleResetPassword(selectedUser.id)}
-            disabled={actionLoading}
-          >
-            Reset Password
-          </Button>
           <Button onClick={() => setViewModalOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
@@ -695,6 +692,16 @@ const User = () => {
                 <MenuItem value="Suspended">Suspended</MenuItem>
               </Select>
             </FormControl>
+            <TextField
+              label="Add Wallet Balance (₹)"
+              fullWidth
+              type="number"
+              inputProps={{ min: 0, step: 0.01 }}
+              value={editFormData.walletAmount}
+              onChange={(e) => handleEditFormChange('walletAmount', e.target.value)}
+              helperText="Enter amount to transfer from admin wallet to user wallet (leave blank to skip)"
+              placeholder="0.00"
+            />
           </Stack>
         </DialogContent>
         <DialogActions>

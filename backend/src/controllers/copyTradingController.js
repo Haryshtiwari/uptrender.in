@@ -1,4 +1,4 @@
-import { CopyTradingAccount, sequelize } from '../models/index.js';
+import { CopyTradingAccount, Charge, Wallet, WalletTransaction, sequelize } from '../models/index.js';
 import { validationResult } from 'express-validator';
 import crypto from 'crypto';
 import { Op } from 'sequelize';
@@ -104,12 +104,15 @@ export const getAccount = async (req, res) => {
 
 // Create a new copy trading account
 export const createAccount = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     console.log('Creating copy trading account:', req.body);
     
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       console.log('Validation errors:', errors.array());
+      await transaction.rollback();
       return res.status(400).json({
         success: false,
         error: 'Validation failed',
@@ -124,10 +127,55 @@ export const createAccount = async (req, res) => {
 
     // Validate required fields
     if (!name || !type || !broker || !apiKey || !secretKey) {
+      await transaction.rollback();
       return res.status(400).json({
         success: false,
         error: 'Missing required fields: name, type, broker, apiKey, secretKey',
       });
+    }
+
+    // Check for copy trading account charge
+    const charge = await Charge.findOne({
+      where: { chargeType: 'copy_trading_account', isActive: true }
+    });
+
+    if (charge && charge.amount > 0) {
+      // Get user wallet
+      const wallet = await Wallet.findOne({ where: { userId } });
+      
+      if (!wallet) {
+        await transaction.rollback();
+        return res.status(400).json({ 
+          success: false,
+          error: 'Wallet not found. Please contact support.' 
+        });
+      }
+
+      // Check if wallet has sufficient balance
+      if (parseFloat(wallet.balance) < parseFloat(charge.amount)) {
+        await transaction.rollback();
+        return res.status(400).json({ 
+          success: false,
+          error: `Insufficient wallet balance. ₹${charge.amount} required to add copy trading account.`,
+          requiredAmount: parseFloat(charge.amount),
+          currentBalance: parseFloat(wallet.balance)
+        });
+      }
+
+      // Deduct charge from wallet
+      const newBalance = parseFloat(wallet.balance) - parseFloat(charge.amount);
+      await wallet.update({ balance: newBalance }, { transaction });
+
+      // Create wallet transaction
+      await WalletTransaction.create({
+        walletId: wallet.id,
+        type: 'debit',
+        amount: charge.amount,
+        balanceAfter: newBalance,
+        description: `Copy trading account addition charge - ${name}`,
+        reference: `copy_trading_${Date.now()}`,
+        status: 'completed'
+      }, { transaction });
     }
 
     // If child account, validate master account exists
@@ -137,6 +185,7 @@ export const createAccount = async (req, res) => {
       });
       
       if (!masterAccount) {
+        await transaction.rollback();
         return res.status(400).json({
           success: false,
           error: 'Invalid master account selected',
@@ -150,6 +199,7 @@ export const createAccount = async (req, res) => {
     });
 
     if (existingAccount) {
+      await transaction.rollback();
       return res.status(409).json({
         success: false,
         error: 'Account with this name already exists',
@@ -171,8 +221,9 @@ export const createAccount = async (req, res) => {
       secretKey: encryptedSecretKey,
       isActive,
       masterAccountId: type === 'child' ? masterAccountId : null,
-    });
+    }, { transaction });
 
+    await transaction.commit();
     console.log('Account created successfully:', newAccount.id);
 
     res.status(201).json({
@@ -185,9 +236,13 @@ export const createAccount = async (req, res) => {
         isActive: newAccount.isActive,
         createdAt: newAccount.createdAt,
       },
-      message: 'Copy trading account created successfully',
+      message: charge && charge.amount > 0 
+        ? `Copy trading account created successfully. ₹${charge.amount} deducted from wallet.`
+        : 'Copy trading account created successfully',
+      chargeDeducted: charge ? parseFloat(charge.amount) : 0
     });
   } catch (error) {
+    await transaction.rollback();
     console.error('Error creating copy trading account:', error);
     console.error('Error stack:', error.stack);
     res.status(500).json({

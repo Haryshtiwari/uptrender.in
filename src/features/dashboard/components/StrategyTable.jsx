@@ -21,6 +21,7 @@ import {
   DialogActions,
   Button,
   Snackbar,
+  TablePagination,
 } from "@mui/material";
 import {
   MoreHoriz,
@@ -50,6 +51,8 @@ export default function StrategyTable({ searchTerm, filterStatus, onRefresh }) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const fetchStrategies = async () => {
     setLoading(true);
@@ -83,6 +86,7 @@ export default function StrategyTable({ searchTerm, filterStatus, onRefresh }) {
 
   useEffect(() => {
     fetchStrategies();
+    setPage(0); // Reset to first page on filter change
   }, [searchTerm, filterStatus]);
 
   const handleMenuOpen = (event, strategy) => {
@@ -165,6 +169,21 @@ export default function StrategyTable({ searchTerm, filterStatus, onRefresh }) {
     );
   };
 
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  // Get paginated data
+  const paginatedStrategies = strategies.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" py={4}>
@@ -211,7 +230,7 @@ export default function StrategyTable({ searchTerm, filterStatus, onRefresh }) {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {strategies.map((strategy) => (
+                {paginatedStrategies.map((strategy) => (
                   <TableRow key={strategy.id} hover>
                     <TableCell>
                       <Typography fontWeight="bold">{strategy.name}</Typography>
@@ -309,6 +328,15 @@ export default function StrategyTable({ searchTerm, filterStatus, onRefresh }) {
             </Table>
           </TableContainer>
         </Scrollbar>
+        <TablePagination
+          rowsPerPageOptions={[5, 10, 25, 50]}
+          component="div"
+          count={strategies.length}
+          rowsPerPage={rowsPerPage}
+          page={page}
+          onPageChange={handleChangePage}
+          onRowsPerPageChange={handleChangeRowsPerPage}
+        />
       </Paper>
 
       {/* Delete Confirmation Dialog */}

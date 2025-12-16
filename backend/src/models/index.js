@@ -19,6 +19,7 @@ import PlansCatalog from './PlansCatalog.js';
 import AdminPlan from './AdminPlan.js';
 import StrategySubscription from './StrategySubscription.js';
 import CopyTradingAccount from './CopyTradingAccount.js';
+import Charge from './Charge.js';
 
 // ========== User Associations ==========
 User.hasMany(Trade, { foreignKey: 'userId', as: 'trades', onDelete: 'CASCADE' });
@@ -111,5 +112,6 @@ export {
   PlansCatalog,
   AdminPlan,
   StrategySubscription,
-  CopyTradingAccount
+  CopyTradingAccount,
+  Charge
 };

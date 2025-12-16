@@ -49,11 +49,15 @@ import {
   Phone,
   Close,
   Lock,
+  TrendingUp,
+  CheckCircle,
+  Cancel,
 } from '@mui/icons-material';
 import Breadcrumb from '../../../components/layout/full/shared/breadcrumb/Breadcrumb';
 import PageContainer from '../../../components/common/PageContainer';
 import adminUserService from '../../../services/adminUserService';
 import dashboardService from '../../../services/dashboardService';
+import tradeService from '../../../services/tradeService';
 import { formatDistanceToNow, format } from 'date-fns';
 
 const BCrumb = [
@@ -68,14 +72,11 @@ const UserDashboard = () => {
   const [error, setError] = useState('');
   const [totalUsers, setTotalUsers] = useState(0);
   
-  // Dashboard stats
+  // Trading stats
   const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeUsers: 0,
-    verifiedUsers: 0,
-    totalBalance: 0,
-    newUsersToday: 0,
-    revenue: 0,
+    pnl: 0,
+    activeTrades: 0,
+    closedTrades: 0,
   });
   
   // Pagination and search
@@ -95,24 +96,21 @@ const UserDashboard = () => {
   // Snackbar state
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  // Fetch dashboard statistics
+  // Fetch trading statistics
   const fetchDashboardStats = async () => {
     try {
-      const result = await dashboardService.getAdminDashboard();
+      const result = await tradeService.getTradeStats();
       
       if (result.success && result.data) {
         const data = result.data;
         setStats({
-          totalUsers: data.users?.total || 0,
-          activeUsers: data.users?.active || 0,
-          verifiedUsers: data.users?.verified || 0,
-          totalBalance: parseFloat(data.wallets?.totalBalance || 0),
-          newUsersToday: data.recentActivity?.users?.length || 0,
-          revenue: parseFloat(data.plans?.estimatedMonthlyRevenue || 0),
+          pnl: parseFloat(data.totalPnL || 0),
+          activeTrades: data.activeTrades || 0,
+          closedTrades: data.closedTrades || 0,
         });
       }
     } catch (err) {
-      console.error('[UserDashboard] Error fetching dashboard stats:', err);
+      console.error('[UserDashboard] Error fetching trading stats:', err);
     }
   };
   
@@ -320,90 +318,84 @@ const UserDashboard = () => {
     <PageContainer title="Admin User Dashboard" description="Comprehensive user management dashboard">
       <Breadcrumb title="User Dashboard" items={BCrumb} />
       
-      {/* Statistics Cards */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+      {/* Trading Statistics Cards */}
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid size={{ xs: 12, sm: 4, md: 4 }}>
           <Card sx={{ 
             height: '100%', 
-            bgcolor: 'background.paper', 
+            bgcolor: stats.pnl >= 0 ? 'success.light' : 'error.light',
             border: '1px solid', 
-            borderColor: 'divider',
+            borderColor: stats.pnl >= 0 ? 'success.main' : 'error.main',
             borderRadius: 2,
           }}>
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={2}>
-                <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
-                  <People />
+                <Avatar sx={{ 
+                  bgcolor: stats.pnl >= 0 ? 'success.main' : 'error.main', 
+                  width: 56, 
+                  height: 56 
+                }}>
+                  <TrendingUp />
                 </Avatar>
                 <Box>
-                  <Typography variant="h5" fontWeight="bold">{stats.totalUsers}</Typography>
-                  <Typography color="textSecondary" variant="body2">Total Users</Typography>
+                  <Typography variant="h4" fontWeight="bold" color={stats.pnl >= 0 ? 'success.dark' : 'error.dark'}>
+                    ₹{stats.pnl.toFixed(2)}
+                  </Typography>
+                  <Typography color="textSecondary" variant="body1" fontWeight={500}>
+                    P&L
+                  </Typography>
                 </Box>
               </Stack>
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 4, md: 4 }}>
           <Card sx={{ 
             height: '100%', 
-            bgcolor: 'background.paper', 
+            bgcolor: 'info.light', 
             border: '1px solid', 
-            borderColor: 'divider',
+            borderColor: 'info.main',
             borderRadius: 2,
           }}>
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={2}>
-                <Avatar sx={{ bgcolor: 'success.main', width: 48, height: 48 }}>
-                  <PersonAdd />
+                <Avatar sx={{ bgcolor: 'info.main', width: 56, height: 56 }}>
+                  <CheckCircle />
                 </Avatar>
                 <Box>
-                  <Typography variant="h5" fontWeight="bold">{stats.activeUsers}</Typography>
-                  <Typography color="textSecondary" variant="body2">Active Users</Typography>
+                  <Typography variant="h4" fontWeight="bold" color="info.dark">
+                    {stats.activeTrades}
+                  </Typography>
+                  <Typography color="textSecondary" variant="body1" fontWeight={500}>
+                    Active
+                  </Typography>
                 </Box>
               </Stack>
             </CardContent>
           </Card>
         </Grid>
         
-        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+        <Grid size={{ xs: 12, sm: 4, md: 4 }}>
           <Card sx={{ 
             height: '100%', 
-            bgcolor: 'background.paper', 
+            bgcolor: 'grey.100', 
             border: '1px solid', 
-            borderColor: 'divider',
+            borderColor: 'grey.400',
             borderRadius: 2,
           }}>
             <CardContent>
               <Stack direction="row" alignItems="center" spacing={2}>
-                <Avatar sx={{ bgcolor: 'warning.main', width: 48, height: 48 }}>
-                  <People />
+                <Avatar sx={{ bgcolor: 'grey.500', width: 56, height: 56 }}>
+                  <Cancel />
                 </Avatar>
                 <Box>
-                  <Typography variant="h5" fontWeight="bold">{stats.totalUsers - stats.activeUsers}</Typography>
-                  <Typography color="textSecondary" variant="body2">Inactive Users</Typography>
-                </Box>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-        
-        <Grid size={{ xs: 6, sm: 6, md: 3 }}>
-          <Card sx={{ 
-            height: '100%', 
-            bgcolor: 'background.paper', 
-            border: '1px solid', 
-            borderColor: 'divider',
-            borderRadius: 2,
-          }}>
-            <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <Avatar sx={{ bgcolor: 'info.main', width: 48, height: 48 }}>
-                  <Verified />
-                </Avatar>
-                <Box>
-                  <Typography variant="h5" fontWeight="bold">{stats.verifiedUsers}</Typography>
-                  <Typography color="textSecondary" variant="body2">Verified Users</Typography>
+                  <Typography variant="h4" fontWeight="bold" color="grey.700">
+                    {stats.closedTrades}
+                  </Typography>
+                  <Typography color="textSecondary" variant="body1" fontWeight={500}>
+                    Closed
+                  </Typography>
                 </Box>
               </Stack>
             </CardContent>

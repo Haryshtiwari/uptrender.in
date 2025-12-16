@@ -64,7 +64,7 @@ const Register = () => (
       >
         <Box p={4}>
           <AuthRegister
-            title="Welcome to TradeEngine"
+            title="Welcome to Algo Platform"
             subtext={
               <Typography variant="subtitle1" color="textSecondary" mb={1}>
                      Step forward for Trading

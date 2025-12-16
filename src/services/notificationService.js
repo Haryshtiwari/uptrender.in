@@ -32,7 +32,7 @@ class NotificationService {
    */
   async getUnreadNotifications() {
     try {
-      const response = await apiClient.get(API_ROUTES.notifications.unread);
+      const response = await apiClient.get(API_ROUTES.notifications.unreadCount);
       return {
         success: true,
         data: response.data.data || response.data,
@@ -70,7 +70,7 @@ class NotificationService {
    */
   async markAsRead(id) {
     try {
-      const response = await apiClient.put(API_ROUTES.notifications.markRead(id));
+      const response = await apiClient.post(API_ROUTES.notifications.markRead(id));
       return {
         success: true,
         data: response.data.data || response.data,
@@ -90,7 +90,7 @@ class NotificationService {
    */
   async markAllAsRead() {
     try {
-      const response = await apiClient.put(API_ROUTES.notifications.markAllRead);
+      const response = await apiClient.post(API_ROUTES.notifications.markAllRead);
       return {
         success: true,
         message: response.data.message || 'All notifications marked as read',
@@ -126,41 +126,7 @@ class NotificationService {
   /**
    * Get notification preferences
    */
-  async getPreferences() {
-    try {
-      const response = await apiClient.get(API_ROUTES.notifications.preferences);
-      return {
-        success: true,
-        data: response.data.data || response.data,
-      };
-    } catch (error) {
-      console.error('Get notification preferences error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to fetch notification preferences',
-      };
-    }
-  }
-
-  /**
-   * Update notification preferences
-   */
-  async updatePreferences(preferences) {
-    try {
-      const response = await apiClient.put(API_ROUTES.notifications.preferences, preferences);
-      return {
-        success: true,
-        data: response.data.data || response.data,
-        message: response.data.message || 'Preferences updated successfully',
-      };
-    } catch (error) {
-      console.error('Update notification preferences error:', error);
-      return {
-        success: false,
-        error: error.response?.data?.error || 'Failed to update notification preferences',
-      };
-    }
-  }
+  // Preferences endpoints not available on backend; methods removed
 }
 
 export const notificationService = new NotificationService();

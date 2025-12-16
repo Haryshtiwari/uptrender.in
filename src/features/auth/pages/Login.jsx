@@ -62,7 +62,7 @@ const Login = () => (
       >
         <Box p={4}>
           <AuthLogin
-            title="Welcome to TradeEngine"
+            title="Welcome to Algo Platform"
             subtext={
               <Typography variant="subtitle1" color="textSecondary" mb={1}>
                 Step forward for Trading
@@ -71,7 +71,7 @@ const Login = () => (
             subtitle={
               <Stack direction="row" spacing={1} mt={3}>
                 <Typography color="textSecondary" variant="h6" fontWeight="500">
-                  New to TradeEngine?
+                  New to Algo Platform?
                 </Typography>
                 <Typography
                   component={Link}

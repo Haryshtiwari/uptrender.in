@@ -1,4 +1,4 @@
-import { ApiKey, Broker } from '../models/index.js';
+import { ApiKey, Broker, Charge, Wallet, WalletTransaction, sequelize } from '../models/index.js';
 import { Op } from 'sequelize';
 
 // Get user's API keys
@@ -50,6 +50,8 @@ export const getUserApiKeys = async (req, res) => {
 
 // Create API key
 export const createApiKey = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     const userId = req.user.id;
     const { 
@@ -59,9 +61,54 @@ export const createApiKey = async (req, res) => {
 
     // Validate required fields
     if (!segment || !broker || !apiName || !brokerId || !apiKey || !apiSecret) {
+      await transaction.rollback();
       return res.status(400).json({ 
         error: 'Missing required fields: segment, broker, apiName, brokerId, apiKey, apiSecret' 
       });
+    }
+
+    // Check for API key charge
+    const charge = await Charge.findOne({
+      where: { chargeType: 'api_key', isActive: true }
+    });
+
+    if (charge && charge.amount > 0) {
+      // Get user wallet
+      const wallet = await Wallet.findOne({ where: { userId } });
+      
+      if (!wallet) {
+        await transaction.rollback();
+        return res.status(400).json({ 
+          success: false,
+          error: 'Wallet not found. Please contact support.' 
+        });
+      }
+
+      // Check if wallet has sufficient balance
+      if (parseFloat(wallet.balance) < parseFloat(charge.amount)) {
+        await transaction.rollback();
+        return res.status(400).json({ 
+          success: false,
+          error: `Insufficient wallet balance. ₹${charge.amount} required to add API key.`,
+          requiredAmount: parseFloat(charge.amount),
+          currentBalance: parseFloat(wallet.balance)
+        });
+      }
+
+      // Deduct charge from wallet
+      const newBalance = parseFloat(wallet.balance) - parseFloat(charge.amount);
+      await wallet.update({ balance: newBalance }, { transaction });
+
+      // Create wallet transaction
+      await WalletTransaction.create({
+        walletId: wallet.id,
+        type: 'debit',
+        amount: charge.amount,
+        balanceAfter: newBalance,
+        description: `API key addition charge - ${apiName}`,
+        reference: `api_key_${Date.now()}`,
+        status: 'completed'
+      }, { transaction });
     }
 
     const newApiKey = await ApiKey.create({
@@ -77,7 +124,9 @@ export const createApiKey = async (req, res) => {
       passphrase: passphrase || null,
       autologin: autoLogin || false,
       status: 'Active'
-    });
+    }, { transaction });
+
+    await transaction.commit();
 
     // Don't return actual keys in response and map fields for frontend
     const response = newApiKey.toJSON();
@@ -94,10 +143,14 @@ export const createApiKey = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'API key created successfully',
-      data: mappedResponse
+      message: charge && charge.amount > 0 
+        ? `API key created successfully. ₹${charge.amount} deducted from wallet.`
+        : 'API key created successfully',
+      data: mappedResponse,
+      chargeDeducted: charge ? parseFloat(charge.amount) : 0
     });
   } catch (error) {
+    await transaction.rollback();
     console.error('Create API key error:', error);
     res.status(500).json({ error: 'Failed to create API key' });
   }

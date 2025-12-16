@@ -149,7 +149,7 @@ export const updateSubscription = async (req, res) => {
   try {
     const userId = req.user.id;
     const { id } = req.params;
-    const { lots, isActive } = req.body;
+    const { lots, isActive, tradeMode } = req.body;
 
     const subscription = await StrategySubscription.findOne({
       where: { id, userId }
@@ -165,6 +165,9 @@ export const updateSubscription = async (req, res) => {
     }
     if (typeof isActive !== 'undefined') {
       updates.isActive = !!isActive;
+    }
+    if (typeof tradeMode !== 'undefined' && ['paper', 'live'].includes(tradeMode)) {
+      updates.tradeMode = tradeMode;
     }
 
     if (Object.keys(updates).length === 0) {

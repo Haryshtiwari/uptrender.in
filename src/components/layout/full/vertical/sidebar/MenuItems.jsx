@@ -32,10 +32,6 @@ import {
 
 const Menuitems = [
   {
-    navlabel: true,
-    subheader: 'admin',
-  },
-  {
     id: uniqueId(),
     title: 'Dashboard',
     icon: IconDashboard,
@@ -77,54 +73,12 @@ const Menuitems = [
     href: '/admin/trade',
     chipColor: 'secondary',
   },
-
-  {
-    navlabel: true,
-    subheader: 'Strategies',
-  },
-  {
-    id: uniqueId(),
-    title: ' View Strategy ',
-    icon: IconClipboardText,
-  href: '/admin/startegies-data',
-    chipColor: 'secondary',
-  },
-  {
-    id: uniqueId(),
-    title: ' Create Strategy ',
-    icon: IconCirclePlus,
-    href: '/admin/create',
-    chipColor: 'secondary',
-  },
   {
     id: uniqueId(),
     title: ' Strategy MarketPlace ',
     icon: IconCirclePlus,
     href: '/admin/marketplace',
     chipColor: 'secondary',
-  },
-  {
-    navlabel: true,
-    subheader: 'Trade View',
-  },
-  {
-    id: uniqueId(),
-    title: 'User Order History',
-    icon: IconNotes,
-    href: '/admin/order-history',
-    chipColor: 'secondary',
-  },
-  {
-    id: uniqueId(),
-    title: 'Strategy Order History',
-    icon: IconUserCog,
-    href: '/trade/strategy-history',
-    chipColor: 'secondary',
-  },
-
-  {
-    navlabel: true,
-    subheader: 'Subscription Management',
   },
   {
     id: uniqueId(),
@@ -134,36 +88,11 @@ const Menuitems = [
     chipColor: 'secondary',
   },
   {
-    navlabel: true,
-    subheader: 'APP Management',
-  },
-  {
     id: uniqueId(),
-    title: 'Platform Settings',
-    icon: IconApiApp,
-    href: '/admin/settings#platform',
+    title: 'Charges',
+    icon: IconCurrencyDollar,
+    href: '/admin/charges',
     chipColor: 'secondary',
-  },
-  {
-    id: uniqueId(),
-    title: 'API settings',
-    icon: IconListDetails,
-    href: '/admin/settings#api',
-    chipColor: 'secondary',
-  },
-  {
-    id: uniqueId(),
-    title: 'APP settings',
-    icon: IconListDetails,
-    href: '/admin/settings#app',
-    chipColor: 'secondary',
-  },
-
-
-  
-  {
-    navlabel: true,
-    subheader: 'Account',
   },
   {
     id: uniqueId(),
@@ -190,17 +119,6 @@ const Menuitems = [
     title: 'Contact Support',
     icon: IconMessage,
     href: '/admin/contact-support',
-    chipColor: 'secondary',
-  },
-  {
-    navlabel: true,
-    subheader: 'Pages',
-  },
-  {
-    id: uniqueId(),
-    title: 'Strategy Overview',
-    icon: IconGraph,
-    href: '/admin/startegy-overview',
     chipColor: 'secondary',
   },
   // {

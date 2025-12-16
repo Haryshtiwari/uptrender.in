@@ -22,7 +22,7 @@ import Scrollbar from "../../../components/custom-scroll/Scrollbar";
 import { useToast } from "../../../hooks/useToast";
 
 const TradeTabsPanel = ({ trades = [], onUpdate, onDelete, onRefresh, pagination }) => {
-  const [tab, setTab] = useState(1); // Defaulting to "Orders"
+  const [tab, setTab] = useState(0); // Defaulting to "Positions" (Open trades)
   const { showSuccess, showError } = useToast();
 
   const handleDelete = async (tradeId) => {
