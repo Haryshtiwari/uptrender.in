@@ -20,6 +20,7 @@ import AdminPlan from './AdminPlan.js';
 import StrategySubscription from './StrategySubscription.js';
 import CopyTradingAccount from './CopyTradingAccount.js';
 import Charge from './Charge.js';
+import StrategyBroker from './StrategyBroker.js';
 
 // ========== User Associations ==========
 User.hasMany(Trade, { foreignKey: 'userId', as: 'trades', onDelete: 'CASCADE' });
@@ -93,6 +94,28 @@ StrategySubscription.belongsTo(Strategy, { foreignKey: 'strategyId', as: 'strate
 User.hasMany(CopyTradingAccount, { foreignKey: 'userId', as: 'copyTradingAccounts', onDelete: 'CASCADE' });
 CopyTradingAccount.belongsTo(User, { foreignKey: 'userId', as: 'owner' });
 
+// ========== Strategy-Broker Associations ==========
+Strategy.belongsToMany(ApiKey, { 
+  through: StrategyBroker, 
+  foreignKey: 'strategyId', 
+  otherKey: 'apiKeyId',
+  as: 'brokers',
+  onDelete: 'CASCADE' 
+});
+
+ApiKey.belongsToMany(Strategy, { 
+  through: StrategyBroker, 
+  foreignKey: 'apiKeyId', 
+  otherKey: 'strategyId',
+  as: 'strategies',
+  onDelete: 'CASCADE' 
+});
+
+StrategyBroker.belongsTo(Strategy, { foreignKey: 'strategyId', as: 'strategy' });
+StrategyBroker.belongsTo(ApiKey, { foreignKey: 'apiKeyId', as: 'apiKey' });
+Strategy.hasMany(StrategyBroker, { foreignKey: 'strategyId', as: 'strategyBrokers', onDelete: 'CASCADE' });
+ApiKey.hasMany(StrategyBroker, { foreignKey: 'apiKeyId', as: 'strategyBrokers', onDelete: 'CASCADE' });
+
 export {
   sequelize,
   User,
@@ -113,5 +136,6 @@ export {
   AdminPlan,
   StrategySubscription,
   CopyTradingAccount,
-  Charge
+  Charge,
+  StrategyBroker
 };

@@ -32,6 +32,7 @@ import notificationRoutes from './routes/notificationRoutes.js';
 import strategySubscriptionRoutes from './routes/strategySubscriptionRoutes.js';
 import copyTradingRoutes from './routes/copyTradingRoutes.js';
 import chargeRoutes from './routes/chargeRoutes.js';
+import strategyBrokerRoutes from './routes/strategyBrokerRoutes.js';
 
 const app = express();
 
@@ -139,6 +140,7 @@ app.use('/api/admin/plans', adminPlanRoutes);
 app.use('/api/trades', tradeRoutes);
 app.use('/api/strategies/subscriptions', strategySubscriptionRoutes);
 app.use('/api/strategies', strategyRoutes);
+app.use('/api/strategy-brokers', strategyBrokerRoutes);
 app.use('/api/api-keys', apiKeyRoutes);
 app.use('/api/plans', planRoutes);
 app.use('/api/wallet', walletRoutes);

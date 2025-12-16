@@ -49,6 +49,7 @@ import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { Close as CloseIcon } from '@mui/icons-material';
 
 import { useStrategies } from '../../../hooks/useStrategies';
@@ -60,6 +61,7 @@ import EditUserStrategyDialog from '../../strategies/components/EditUserStrategy
 import CloneStrategyDialog from '../../strategies/components/CloneStrategyDialog';
 import DeleteUserStrategyConfirm from '../../strategies/components/DeleteUserStrategyConfirm';
 import ToggleStatusConfirmDialog from '../../strategies/components/ToggleStatusConfirmDialog';
+import BrokerSelectDialog from '../../strategies/components/BrokerSelectDialog';
 
 const UserStrategyInfo = () => {
   const theme = useTheme();
@@ -90,6 +92,12 @@ const UserStrategyInfo = () => {
     strategy: null, 
     subscription: null, 
     type: null // 'strategy' or 'subscription'
+  });
+
+  // Broker Select Dialog state
+  const [brokerSelectDialog, setBrokerSelectDialog] = useState({
+    open: false,
+    strategy: null
   });
 
   // Load subscriptions function (moved to component level)
@@ -663,6 +671,15 @@ const UserStrategyInfo = () => {
                               <DeleteIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
+                          <Tooltip title="Select Brokers" arrow>
+                            <IconButton
+                              color="secondary"
+                              size="small"
+                              onClick={() => setBrokerSelectDialog({ open: true, strategy })}
+                            >
+                              <AccountBalanceIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                           <Tooltip title={`Trade Mode: ${strategy.tradeMode === 'live' ? 'Live' : 'Paper'}`} arrow>
                             <IconButton
                               color={strategy.tradeMode === 'live' ? 'success' : 'info'}
@@ -769,6 +786,15 @@ const UserStrategyInfo = () => {
                               onClick={() => setUnsubscribeDialog({ open: true, subscriptionId: subscription.id })}
                             >
                               <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Select Brokers" arrow>
+                            <IconButton
+                              color="secondary"
+                              size="small"
+                              onClick={() => setBrokerSelectDialog({ open: true, strategy: subscription.strategy })}
+                            >
+                              <AccountBalanceIcon fontSize="small" />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title={`Trade Mode: ${subscription.tradeMode === 'live' ? 'Live' : 'Paper'}`} arrow>
@@ -1010,6 +1036,17 @@ const UserStrategyInfo = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Broker Select Dialog */}
+      <BrokerSelectDialog
+        open={brokerSelectDialog.open}
+        onClose={() => setBrokerSelectDialog({ open: false, strategy: null })}
+        strategy={brokerSelectDialog.strategy}
+        onSuccess={() => {
+          showToast('Brokers updated successfully', 'success');
+          refresh();
+        }}
+      />
     </Box>
   );
 };

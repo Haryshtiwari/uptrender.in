@@ -6,6 +6,7 @@
 export { default as dashboardService } from './dashboardService';
 export { default as tradeService } from './tradeService';
 export { default as strategyService } from './strategyService';
+export { default as strategyBrokerService } from './strategyBrokerService';
 export { default as walletService } from './walletService';
 export { default as notificationService } from './notificationService';
 export { default as userService } from './userService';
